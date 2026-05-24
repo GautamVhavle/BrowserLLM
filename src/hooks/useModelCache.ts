@@ -32,51 +32,57 @@ export function useModelCache() {
         }
       }
 
-      // Verify completeness: parse the ndarray-cache.json manifest for each model
-      // and check that every listed shard file is actually cached.
+      // Verify completeness by parsing the weight manifest and checking all shards exist.
+      // WebLLM uses either "ndarray-cache.json" or "tensor-cache.json" as the manifest.
+      const MANIFEST_NAMES = ["ndarray-cache.json", "tensor-cache.json"];
       const modelIds = new Set<string>();
+
       for (const [id, urls] of modelUrls) {
-        const manifestUrl = [...urls].find((u) => u.endsWith("ndarray-cache.json"));
-        if (!manifestUrl) continue; // No manifest = definitely incomplete
+        // Find the manifest URL (try both known filenames)
+        const manifestUrl = [...urls].find((u) =>
+          MANIFEST_NAMES.some((m) => u.endsWith(m))
+        );
+
+        if (!manifestUrl) {
+          // No manifest found — fall back to file count heuristic.
+          // A complete model needs config + tokenizer + wasm + at least 1 shard.
+          if (urls.size >= 4) modelIds.add(id);
+          continue;
+        }
 
         try {
-          // Read the manifest from cache
           const manifestResponse = await caches.match(manifestUrl);
-          if (!manifestResponse) continue;
+          if (!manifestResponse) {
+            if (urls.size >= 4) modelIds.add(id);
+            continue;
+          }
           const manifest = await manifestResponse.json();
 
-          // WebLLM ndarray-cache.json can be:
-          //   - A top-level array of shard descriptors: [{ dataPath, ... }, ...]
-          //   - Or an object with a records array: { records: [{ dataPath, ... }, ...] }
+          // Manifest can be a top-level array or { records: [...] }
           const shardList: { dataPath?: string }[] = Array.isArray(manifest)
             ? manifest
             : Array.isArray(manifest?.records)
             ? manifest.records
             : [];
 
-          if (shardList.length === 0) {
-            // Can't parse manifest structure — fall back to counting files.
-            // A model needs at minimum config + tokenizer + wasm + 1 shard = 4 files.
-            if (urls.size >= 4) modelIds.add(id);
-            continue;
-          }
-
-          // Get unique shard filenames expected
           const expectedShards = new Set(
             shardList.map((r) => r.dataPath).filter(Boolean) as string[]
           );
+
           if (expectedShards.size === 0) {
+            // Can't extract shard list — fall back to file count
             if (urls.size >= 4) modelIds.add(id);
             continue;
           }
 
-          const baseUrl = manifestUrl.replace(/ndarray-cache\.json$/, "");
+          // Derive base URL from manifest URL
+          const manifestFilename = MANIFEST_NAMES.find((m) => manifestUrl.endsWith(m))!;
+          const baseUrl = manifestUrl.slice(0, -manifestFilename.length);
 
           // Check every expected shard exists in cache
           let complete = true;
           for (const shard of expectedShards) {
-            const shardUrl = baseUrl + shard;
-            if (!urls.has(shardUrl)) {
+            if (!urls.has(baseUrl + shard)) {
               complete = false;
               break;
             }
@@ -86,7 +92,8 @@ export function useModelCache() {
             modelIds.add(id);
           }
         } catch {
-          // Failed to parse manifest, skip this model
+          // Manifest parse failed — fall back to file count
+          if (urls.size >= 4) modelIds.add(id);
         }
       }
 

@@ -344,10 +344,14 @@ export function ChatLayout({
 
   const supportsVision = model?.categories?.includes("vision") ?? false;
 
-  // Redirect to model selector if no model loaded and no chat history
+  // Redirect to model selector if no model loaded, not loading, no chat history,
+  // AND no pending model to auto-load from sessionStorage.
   useEffect(() => {
     if (!isModelLoaded && !isLoadingModel && messages.length === 0) {
-      navigate("/select-model", { replace: true });
+      const pendingModel = sessionStorage.getItem("browserai-loaded-model");
+      if (!pendingModel) {
+        navigate("/select-model", { replace: true });
+      }
     }
   }, [isModelLoaded, isLoadingModel, messages.length, navigate]);
 

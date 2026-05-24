@@ -22,6 +22,7 @@ export function SelectModelPage() {
   const handleLoad = () => {
     // Save selection so chat auto-loads it
     localStorage.setItem("browserai-selected-model", selectedModelId);
+    sessionStorage.setItem("browserai-loaded-model", selectedModelId);
     saveDefaultModelId(selectedModelId);
     navigate("/chat");
   };
