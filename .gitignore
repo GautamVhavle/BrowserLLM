@@ -48,4 +48,4 @@ coverage/
 # Plan / scratch files (not part of the source)
 browserai-plan.md
 browserai-plan2.md
-models.ts
+/models.ts
