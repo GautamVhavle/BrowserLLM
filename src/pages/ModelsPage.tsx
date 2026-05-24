@@ -959,10 +959,11 @@ export function ModelsPage() {
             </button>
             <button
               onClick={() => navigate("/chat")}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/[0.06] text-gray-300 border border-white/[0.1] text-sm hover:bg-white/[0.1] transition-colors cursor-pointer"
+              className="flex items-center gap-1 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-white/[0.06] text-gray-300 border border-white/[0.1] text-xs sm:text-sm hover:bg-white/[0.1] transition-colors cursor-pointer whitespace-nowrap"
             >
-              Open Chat
-              <ChevronRight className="w-4 h-4" />
+              <span className="hidden sm:inline">Open Chat</span>
+              <span className="sm:hidden">Chat</span>
+              <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
           </div>
         </div>
