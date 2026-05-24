@@ -27,7 +27,7 @@ function LandingPage() {
   const { isOnline } = useOnlineStatus();
 
   return (
-    <div className="min-h-screen bg-[#06060a]">
+    <div className="min-h-screen bg-[#06060a] overflow-x-hidden">
       <StarField />
       {!isOnline && (
         <div className="fixed top-0 left-0 right-0 z-50 bg-orange-500/10 backdrop-blur-md border-b border-orange-500/20 px-4 py-2.5 text-center text-sm text-orange-400 flex items-center justify-center gap-2">

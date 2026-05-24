@@ -8,7 +8,7 @@ interface CtaSectionProps {
 
 export function CtaSection({ onStart }: CtaSectionProps) {
   return (
-    <section className="py-24 sm:py-32 px-6">
+    <section className="py-24 sm:py-32 px-6 overflow-hidden">
       <motion.div
         initial="hidden"
         whileInView="visible"

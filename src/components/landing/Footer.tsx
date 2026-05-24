@@ -36,7 +36,7 @@ export function Footer() {
           </div>
 
           {/* Right columns */}
-          <div className="flex gap-16 sm:gap-20">
+          <div className="flex gap-8 sm:gap-16 lg:gap-20">
             {/* Product links */}
             <div>
             <h4 className="text-xs font-mono text-white/50 tracking-wider uppercase mb-4">Product</h4>
