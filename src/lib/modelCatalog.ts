@@ -56,9 +56,9 @@ export interface CatalogModel {
 }
 
 function tier(vram: number): HardwareTier {
-  if (vram < 1500) return "low";
-  if (vram < 4000) return "medium";
-  if (vram < 8000) return "high";
+  if (vram < 2500) return "low";
+  if (vram < 6000) return "medium";
+  if (vram < 12000) return "high";
   return "ultra";
 }
 

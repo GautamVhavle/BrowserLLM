@@ -467,10 +467,10 @@ const TIER_COLORS = {
 };
 
 const TIER_DESCRIPTIONS = {
-  low: "Basic models (< 1.5 GB), good for quick tasks",
-  medium: "Mid-range models (1.5–4 GB), balanced quality and speed",
-  high: "Large models (4–8 GB), high quality responses",
-  ultra: "Premium models (8+ GB), best available quality",
+  low: "Basic models (< 2.5 GB), good for quick tasks",
+  medium: "Mid-range models (2.5-6 GB), balanced quality and speed",
+  high: "Large models (6-12 GB), high quality responses",
+  ultra: "Premium models (12+ GB), best available quality",
 };
 
 function formatBytes(bytes: number): string {
@@ -585,6 +585,11 @@ function HardwareDetailsPanel({ hardware }: { hardware: HardwareInfo & { detect:
           </div>
         ))}
       </div>
+
+      {/* Disclaimer */}
+      <p className="text-[10px] text-gray-600 mt-2 leading-relaxed text-center">
+        Estimates are approximate, based on browser-reported GPU limits. Actual capabilities may vary.
+      </p>
 
       {/* Expanded details */}
       {expanded && (

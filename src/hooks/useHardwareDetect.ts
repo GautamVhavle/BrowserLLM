@@ -37,9 +37,9 @@ export interface HardwareInfo {
 }
 
 function getRecommendedTier(vramMB: number): "low" | "medium" | "high" | "ultra" {
-  if (vramMB >= 8000) return "ultra";
-  if (vramMB >= 4000) return "high";
-  if (vramMB >= 1500) return "medium";
+  if (vramMB >= 12000) return "ultra";
+  if (vramMB >= 6000) return "high";
+  if (vramMB >= 2500) return "medium";
   return "low";
 }
 
@@ -118,9 +118,31 @@ export function useHardwareDetect() {
 
       const limits = adapter.limits;
       const maxBuffer = limits?.maxStorageBufferBindingSize ?? 0;
-      const estimatedVRAM = Math.round(
+      const vendor = (adapterInfo.vendor ?? "").toLowerCase();
+      const arch = (adapterInfo.architecture ?? "").toLowerCase();
+
+      // Estimate VRAM from max buffer size
+      let estimatedVRAM = Math.round(
         Math.min(maxBuffer / (1024 * 1024) * 4, 65536)
       );
+
+      // On unified memory architectures (Apple Silicon, some integrated GPUs),
+      // maxStorageBufferBindingSize reports a share of system RAM, inflating VRAM.
+      // Cap to deviceMemory (system RAM) since GPU memory IS system memory and
+      // only ~65-75% is realistically available for GPU workloads.
+      const isUnifiedMemory =
+        vendor === "apple" ||
+        arch.includes("apple") ||
+        arch.includes("metal");
+
+      if (isUnifiedMemory && deviceMemory > 0) {
+        const unifiedCap = Math.round(deviceMemory * 1024 * 0.65);
+        estimatedVRAM = Math.min(estimatedVRAM, unifiedCap);
+      } else if (deviceMemory > 0) {
+        // For discrete GPUs, VRAM shouldn't exceed system RAM as a sanity check
+        const ramCapMB = deviceMemory * 1024;
+        estimatedVRAM = Math.min(estimatedVRAM, ramCapMB);
+      }
 
       // Extended limits
       const maxComputeWorkgroupSize = limits?.maxComputeWorkgroupSizeX ?? 0;
