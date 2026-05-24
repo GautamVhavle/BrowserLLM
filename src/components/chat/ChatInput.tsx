@@ -43,6 +43,13 @@ export function ChatInput({
     setInput("");
   };
 
+  const handleFocus = () => {
+    // On mobile, scroll the input into view when focused
+    setTimeout(() => {
+      textareaRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    }, 300);
+  };
+
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -60,10 +67,11 @@ export function ChatInput({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
+            onFocus={handleFocus}
             placeholder={placeholder ?? "Type a message..."}
             disabled={disabled && !isGenerating}
             rows={1}
-            className="w-full resize-none bg-transparent text-gray-200 placeholder-gray-600 px-3 sm:px-4 pt-3 pb-1 text-[16px] sm:text-sm focus:outline-none disabled:opacity-50"
+            className="w-full resize-none bg-transparent text-gray-200 placeholder-gray-600 px-3 sm:px-4 pt-3 pb-1 text-base sm:text-sm focus:outline-none disabled:opacity-50"
           />
 
           {/* Footer */}
@@ -74,13 +82,13 @@ export function ChatInput({
               <div className="relative group/attach">
                 <button
                   disabled={!supportsVision}
-                  className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                  className={`p-2 sm:p-2.5 rounded-lg transition-colors cursor-pointer active:scale-95 ${
                     supportsVision
                       ? "text-gray-400 hover:text-gray-200 hover:bg-white/[0.06]"
                       : "text-gray-600 cursor-not-allowed opacity-40"
                   }`}
                 >
-                  <Paperclip className="w-3.5 h-3.5" />
+                  <Paperclip className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
                 {!supportsVision && (
                   <div className="absolute bottom-full left-0 mb-1 px-2 py-1 bg-gray-800 text-[10px] text-gray-300 rounded-lg whitespace-nowrap opacity-0 group-hover/attach:opacity-100 transition-opacity pointer-events-none border border-white/[0.08] shadow-lg">
@@ -94,18 +102,18 @@ export function ChatInput({
             {isGenerating ? (
               <button
                 onClick={onStop}
-                className="bg-white/[0.1] hover:bg-white/[0.15] text-gray-300 p-2 rounded-lg transition-all cursor-pointer"
+                className="bg-white/[0.1] hover:bg-white/[0.15] text-gray-300 p-2 sm:p-2.5 rounded-lg transition-all cursor-pointer active:scale-95"
                 title="Stop generating"
               >
-                <Square className="w-4 h-4" />
+                <Square className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             ) : (
               <button
                 onClick={handleSend}
                 disabled={disabled || !input.trim()}
-                className="bg-purple-500 text-white p-2 rounded-lg hover:bg-purple-400 transition-all disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer"
+                className="bg-purple-500 text-white p-2 sm:p-2.5 rounded-lg hover:bg-purple-400 transition-all disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer active:scale-95"
               >
-                <ArrowUp className="w-4 h-4" />
+                <ArrowUp className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             )}
           </div>

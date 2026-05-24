@@ -57,6 +57,8 @@ import {
 import { useHardwareDetect, type HardwareInfo } from "../hooks/useHardwareDetect";
 import { useModelCache } from "../hooks/useModelCache";
 import { useModelDownloader } from "../hooks/useModelDownloader";
+import { useToast } from "../hooks/useToast";
+import { ToastContainer } from "../components/ui/Toast";
 import {
   loadDefaultModelId,
   saveDefaultModelId,
@@ -411,7 +413,7 @@ function ModelDetailModal({
               <>
                 <button
                   onClick={onSetDefault}
-                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors cursor-pointer ${
+                  className={`flex-1 flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 rounded-lg border text-xs sm:text-sm font-medium transition-colors cursor-pointer active:scale-95 ${
                     isDefault
                       ? "bg-purple-500/10 border-purple-500/20 text-purple-400"
                       : "bg-white/[0.04] border-white/[0.08] text-gray-400 hover:text-gray-200 hover:bg-white/[0.06]"
@@ -419,14 +421,15 @@ function ModelDetailModal({
                   title={isDefault ? "Already set as default" : "Set as default model"}
                 >
                   <Star className={`w-3.5 h-3.5 ${isDefault ? "fill-purple-400" : ""}`} />
-                  {isDefault ? "Default Model" : "Set as Default"}
+                  <span className="hidden sm:inline">{isDefault ? "Default Model" : "Set as Default"}</span>
+                  <span className="sm:hidden">{isDefault ? "Default" : "Set Default"}</span>
                 </button>
                 <button
                   onClick={onDelete}
-                  className="px-3 py-2.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-gray-500 hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/[0.06] transition-colors cursor-pointer"
+                  className="px-3 py-2.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-gray-500 hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/[0.06] transition-colors cursor-pointer active:scale-95"
                   title="Delete from cache"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                 </button>
               </>
             ) : isDownloading ? (
@@ -446,10 +449,11 @@ function ModelDetailModal({
             ) : (
               <button
                 onClick={onDownload}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-white/[0.06] text-gray-200 border border-white/[0.1] text-sm font-medium hover:bg-white/[0.1] transition-colors cursor-pointer"
+                className="flex-1 flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 rounded-lg bg-white/[0.06] text-gray-200 border border-white/[0.1] text-xs sm:text-sm font-medium hover:bg-white/[0.1] transition-colors cursor-pointer active:scale-95"
               >
-                <Download className="w-3.5 h-3.5" />
-                Download
+                <Download className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+                <span className="hidden sm:inline">Download</span>
+                <span className="sm:hidden">DL</span>
               </button>
             )}
           </div>
@@ -775,6 +779,7 @@ export function ModelsPage() {
   const hardware = useHardwareDetect();
   const cache = useModelCache();
   const downloader = useModelDownloader();
+  const toast = useToast();
 
   const [search, setSearch] = useState("");
   const [selectedFamily, setSelectedFamily] = useState<ModelFamily | "all">("all");
@@ -865,9 +870,21 @@ export function ModelsPage() {
   const handleDownload = (modelId: string) => {
     const model = MODEL_CATALOG.find((m) => m.id === modelId);
     const name = model?.name ?? modelId;
+    
+    // Show notification
+    toast.info(`Downloading ${name}...`);
+    
+    // Scroll to top on mobile only (viewport width < 768px)
+    if (window.innerWidth < 768) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+    
     downloader.startDownload(modelId, name).then(() => {
       // Refresh cache list after download completes
       cache.refresh();
+      toast.success(`${name} downloaded successfully!`);
+    }).catch(() => {
+      toast.error(`Failed to download ${name}`);
     });
   };
 
@@ -1378,6 +1395,9 @@ export function ModelsPage() {
           downloadProgress={downloader.getDownload(selectedModel.id)?.progress ?? 0}
         />
       )}
+
+      {/* Toast notifications */}
+      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
     </div>
   );
 }
