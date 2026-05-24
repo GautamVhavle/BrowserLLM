@@ -5,17 +5,21 @@
  *   /             , Marketing landing page
  *   /models       , Full model catalog with hardware detection
  *   /chat/:threadId, Chat interface (each conversation gets a unique URL)
+ *
+ * ChatPage is lazy-loaded so the heavy @mlc-ai/web-llm library (6+ MB WASM)
+ * is only fetched when the user navigates to /chat. This keeps the landing
+ * page fast and prevents mobile OOM crashes.
  */
-import { Routes, Route, useNavigate, useParams } from "react-router-dom";
-import { useEffect, useCallback } from "react";
-import { WifiOff } from "lucide-react";
+import { Routes, Route, useNavigate } from "react-router-dom";
+import { lazy, Suspense } from "react";
+import { WifiOff, Loader2 } from "lucide-react";
 import { Analytics } from "@vercel/analytics/react";
-import { useChatManager } from "./hooks/useChatManager";
 import { useOnlineStatus } from "./hooks/useOnlineStatus";
 import { StarField } from "./components/ui";
-import { ChatLayout } from "./components/chat";
 import { Landing } from "./components/landing";
 import { ModelsPage } from "./pages/ModelsPage";
+
+const ChatPage = lazy(() => import("./pages/ChatPage"));
 
 function LandingPage() {
   const navigate = useNavigate();
@@ -35,83 +39,14 @@ function LandingPage() {
   );
 }
 
-function ChatPage() {
-  const navigate = useNavigate();
-  const { threadId } = useParams<{ threadId: string }>();
-  const manager = useChatManager();
-
-  // If no threadId in URL, create a new chat and redirect
-  useEffect(() => {
-    if (!threadId) {
-      const id = manager.createChat();
-      navigate(`/chat/${id}`, { replace: true });
-    }
-  }, [threadId]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // If threadId in URL but not the active chat, switch to it
-  useEffect(() => {
-    if (threadId && threadId !== manager.activeChatId) {
-      const chatExists = manager.chats.some((c) => c.id === threadId);
-      if (chatExists) {
-        manager.switchChat(threadId);
-      } else {
-        // Chat doesn't exist, create new and redirect
-        const id = manager.createChat();
-        navigate(`/chat/${id}`, { replace: true });
-      }
-    }
-  }, [threadId]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleNewChat = useCallback(() => {
-    const id = manager.createChat();
-    navigate(`/chat/${id}`);
-  }, [manager, navigate]);
-
-  const handleSwitchChat = useCallback((id: string) => {
-    manager.switchChat(id);
-    navigate(`/chat/${id}`);
-  }, [manager, navigate]);
-
-  const handleDeleteChat = useCallback((id: string) => {
-    manager.deleteChat(id);
-    const remaining = manager.chats.filter((c) => c.id !== id);
-    if (remaining.length > 0) {
-      navigate(`/chat/${remaining[0].id}`);
-    } else {
-      navigate("/chat");
-    }
-  }, [manager, navigate]);
-
-  if (!threadId) return null;
-
+function ChatFallback() {
   return (
-    <>
-      <ChatLayout
-        chats={manager.chats}
-        activeChatId={manager.activeChatId}
-        activeChat={manager.activeChat}
-        onNewChat={handleNewChat}
-        onSwitchChat={handleSwitchChat}
-        onDeleteChat={handleDeleteChat}
-        onClearChat={manager.clearActiveChat}
-        onSendMessage={manager.sendMessage}
-        selectedModelId={manager.selectedModelId}
-        loadedModelId={manager.loadedModelId}
-        onSelectModel={manager.setSelectedModelId}
-        isModelLoaded={manager.isModelLoaded}
-        isLoadingModel={manager.isLoadingModel}
-        isGenerating={manager.isGenerating}
-        loadingProgress={manager.loadingProgress}
-        error={manager.error}
-        onLoadModel={manager.loadModel}
-        onCancelDownload={manager.cancelDownload}
-        onStopGeneration={manager.stopGeneration}
-        onBack={() => navigate("/")}
-        lastStats={manager.lastStats}
-        backgroundDownloads={manager.backgroundDownloads}
-        onDismissBackgroundDownload={manager.dismissBackgroundDownload}
-      />
-    </>
+    <div className="min-h-screen bg-[#06060a] flex items-center justify-center">
+      <div className="flex flex-col items-center gap-3">
+        <Loader2 className="w-6 h-6 text-purple-400 animate-spin" />
+        <p className="text-sm text-gray-500">Loading chat...</p>
+      </div>
+    </div>
   );
 }
 
@@ -122,8 +57,8 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/models" element={<ModelsPage />} />
-        <Route path="/chat" element={<ChatPage />} />
-        <Route path="/chat/:threadId" element={<ChatPage />} />
+        <Route path="/chat" element={<Suspense fallback={<ChatFallback />}><ChatPage /></Suspense>} />
+        <Route path="/chat/:threadId" element={<Suspense fallback={<ChatFallback />}><ChatPage /></Suspense>} />
       </Routes>
     </>
   );
