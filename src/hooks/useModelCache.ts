@@ -13,8 +13,8 @@ export function useModelCache() {
     setLoading(true);
     try {
       const cacheNames = await caches.keys();
-      // Count cached files per model to detect partial downloads
-      const modelFileCounts = new Map<string, number>();
+      // Group cached URLs by model ID
+      const modelUrls = new Map<string, Set<string>>();
 
       for (const name of cacheNames) {
         if (name.includes("webllm") || name.includes("model")) {
@@ -22,24 +22,53 @@ export function useModelCache() {
           const keys = await cache.keys();
           for (const req of keys) {
             const url = req.url;
-            // Extract model ID from cache URL patterns
-            // WebLLM caches at URLs like: https://huggingface.co/mlc-ai/<model-id>/...
             const match = url.match(/mlc-ai\/([^/]+)/);
             if (match) {
               const id = match[1];
-              modelFileCounts.set(id, (modelFileCounts.get(id) ?? 0) + 1);
+              if (!modelUrls.has(id)) modelUrls.set(id, new Set());
+              modelUrls.get(id)!.add(url);
             }
           }
         }
       }
 
-      // A fully downloaded model has config + tokenizer + wasm + weight shards (4+ files)
-      // Partially downloaded models with fewer files are incomplete and should not appear
-      const MIN_FILES_FOR_COMPLETE = 4;
+      // Verify completeness: parse the ndarray-cache.json manifest for each model
+      // and check that every listed shard file is actually cached.
       const modelIds = new Set<string>();
-      for (const [id, count] of modelFileCounts) {
-        if (count >= MIN_FILES_FOR_COMPLETE) {
-          modelIds.add(id);
+      for (const [id, urls] of modelUrls) {
+        const manifestUrl = [...urls].find((u) => u.endsWith("ndarray-cache.json"));
+        if (!manifestUrl) continue; // No manifest = definitely incomplete
+
+        try {
+          // Read the manifest from cache
+          const manifestResponse = await caches.match(manifestUrl);
+          if (!manifestResponse) continue;
+          const manifest = await manifestResponse.json();
+
+          // The manifest has a "records" array, each with a "dataPath" field
+          // listing the shard filenames (e.g. "params_shard_0.bin")
+          const records: { dataPath: string }[] = manifest?.records ?? [];
+          if (records.length === 0) continue;
+
+          // Get unique shard filenames expected
+          const expectedShards = new Set(records.map((r) => r.dataPath));
+          const baseUrl = manifestUrl.replace(/ndarray-cache\.json$/, "");
+
+          // Check every expected shard exists in cache
+          let complete = true;
+          for (const shard of expectedShards) {
+            const shardUrl = baseUrl + shard;
+            if (!urls.has(shardUrl)) {
+              complete = false;
+              break;
+            }
+          }
+
+          if (complete) {
+            modelIds.add(id);
+          }
+        } catch {
+          // Failed to parse manifest, skip this model
         }
       }
 
