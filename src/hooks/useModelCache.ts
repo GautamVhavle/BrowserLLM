@@ -45,13 +45,31 @@ export function useModelCache() {
           if (!manifestResponse) continue;
           const manifest = await manifestResponse.json();
 
-          // The manifest has a "records" array, each with a "dataPath" field
-          // listing the shard filenames (e.g. "params_shard_0.bin")
-          const records: { dataPath: string }[] = manifest?.records ?? [];
-          if (records.length === 0) continue;
+          // WebLLM ndarray-cache.json can be:
+          //   - A top-level array of shard descriptors: [{ dataPath, ... }, ...]
+          //   - Or an object with a records array: { records: [{ dataPath, ... }, ...] }
+          const shardList: { dataPath?: string }[] = Array.isArray(manifest)
+            ? manifest
+            : Array.isArray(manifest?.records)
+            ? manifest.records
+            : [];
+
+          if (shardList.length === 0) {
+            // Can't parse manifest structure — fall back to counting files.
+            // A model needs at minimum config + tokenizer + wasm + 1 shard = 4 files.
+            if (urls.size >= 4) modelIds.add(id);
+            continue;
+          }
 
           // Get unique shard filenames expected
-          const expectedShards = new Set(records.map((r) => r.dataPath));
+          const expectedShards = new Set(
+            shardList.map((r) => r.dataPath).filter(Boolean) as string[]
+          );
+          if (expectedShards.size === 0) {
+            if (urls.size >= 4) modelIds.add(id);
+            continue;
+          }
+
           const baseUrl = manifestUrl.replace(/ndarray-cache\.json$/, "");
 
           // Check every expected shard exists in cache
