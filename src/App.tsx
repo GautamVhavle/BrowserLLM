@@ -9,6 +9,7 @@
 import { Routes, Route, useNavigate, useParams } from "react-router-dom";
 import { useEffect, useCallback } from "react";
 import { WifiOff } from "lucide-react";
+import { Analytics } from "@vercel/analytics/react";
 import { useChatManager } from "./hooks/useChatManager";
 import { useOnlineStatus } from "./hooks/useOnlineStatus";
 import { StarField } from "./components/ui";
@@ -116,12 +117,15 @@ function ChatPage() {
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/models" element={<ModelsPage />} />
-      <Route path="/chat" element={<ChatPage />} />
-      <Route path="/chat/:threadId" element={<ChatPage />} />
-    </Routes>
+    <>
+      <Analytics />
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/models" element={<ModelsPage />} />
+        <Route path="/chat" element={<ChatPage />} />
+        <Route path="/chat/:threadId" element={<ChatPage />} />
+      </Routes>
+    </>
   );
 }
 
