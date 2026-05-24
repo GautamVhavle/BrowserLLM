@@ -136,15 +136,6 @@ export function HeroSection({ onStart }: HeroSectionProps) {
         variants={stagger}
         className="relative z-10 max-w-5xl mx-auto w-full"
       >
-        {/* ── Logo mark ── */}
-        <motion.div
-          variants={fadeUp}
-          transition={heroTransition}
-          className="flex justify-center mb-8"
-        >
-          <img src="/logo.png" alt="BrowserLLM" className="w-20 h-20 object-contain drop-shadow-[0_0_32px_rgba(0,255,136,0.15)]" />
-        </motion.div>
-
         {/* ── Top bar ── */}
         <motion.div
           variants={fadeUp}

@@ -2,6 +2,7 @@
  * Landing page composition, assembles all landing sections in order.
  * Each section is a standalone component with its own scroll animations.
  */
+import { Header } from "./Header";
 import { HeroSection } from "./HeroSection";
 import { HowItWorksSection } from "./HowItWorksSection";
 import { TechStackSection } from "./TechStackSection";
@@ -20,6 +21,7 @@ interface LandingProps {
 export function Landing({ onStart }: LandingProps) {
   return (
     <main className="relative z-10 text-white" role="main">
+      <Header onStart={onStart} />
       <HeroSection onStart={onStart} />
       <BentoGridSection />
       <HowItWorksSection />

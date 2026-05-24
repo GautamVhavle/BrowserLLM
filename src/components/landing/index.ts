@@ -1,4 +1,5 @@
 export { Landing } from "./Landing";
+export { Header } from "./Header";
 export { HeroSection } from "./HeroSection";
 export { HowItWorksSection } from "./HowItWorksSection";
 export { TechStackSection } from "./TechStackSection";
