@@ -62,7 +62,7 @@ function StatusIcon({ status }: { status: "yes" | "no" | "partial" }) {
 
 export function ComparisonSection() {
   return (
-    <section className="py-24 sm:py-32 px-6">
+    <section id="comparison" className="py-24 sm:py-32 px-6">
       <div className="max-w-5xl mx-auto">
         <SectionHeader
           label="Comparison"

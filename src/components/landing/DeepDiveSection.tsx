@@ -5,7 +5,7 @@ import { SectionHeader } from "../ui/SectionHeader";
 
 export function DeepDiveSection() {
   return (
-    <section className="py-24 sm:py-32 px-6">
+    <section id="deep-dive" className="py-24 sm:py-32 px-6">
       <div className="max-w-6xl mx-auto">
         <SectionHeader
           label="Under The Hood"

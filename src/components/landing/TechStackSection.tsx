@@ -41,7 +41,7 @@ const TECH_CARDS = [
 
 export function TechStackSection() {
   return (
-    <section className="py-24 sm:py-32 px-6">
+    <section id="tech" className="py-24 sm:py-32 px-6">
       <div className="max-w-6xl mx-auto">
         <SectionHeader
           label="The Stack"

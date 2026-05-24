@@ -127,7 +127,7 @@ function AuroraBackground() {
 /* ── Main hero ─────────────────────────────────────────────── */
 export function HeroSection({ onStart }: HeroSectionProps) {
   return (
-    <section className="relative min-h-screen flex flex-col items-center justify-center px-6 pt-6 pb-16 overflow-hidden">
+    <section className="relative min-h-screen flex flex-col items-center justify-center px-6 pt-20 pb-16 overflow-hidden">
       <AuroraBackground />
 
       <motion.div
@@ -136,18 +136,6 @@ export function HeroSection({ onStart }: HeroSectionProps) {
         variants={stagger}
         className="relative z-10 max-w-5xl mx-auto w-full"
       >
-        {/* ── Top bar ── */}
-        <motion.div
-          variants={fadeUp}
-          transition={heroTransition}
-          className="flex items-center justify-center gap-4 mb-16"
-        >
-          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/[0.06] bg-white/[0.02] text-xs font-mono text-white/40 tracking-wider">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#00ff88]/70 animate-pulse" />
-            open source · client-side · offline-ready
-          </span>
-        </motion.div>
-
         {/* ── Title ── */}
         <motion.div variants={fadeUp} transition={heroTransition} className="text-center mb-8">
           <h1 className="leading-[0.85] tracking-[-0.02em]">

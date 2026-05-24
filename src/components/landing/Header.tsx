@@ -1,5 +1,5 @@
 import { useScroll, useMotionValueEvent } from "framer-motion";
-import { Star } from "lucide-react";
+import { Star, Menu, X } from "lucide-react";
 import { useState } from "react";
 
 const GithubIcon = ({ className }: { className?: string }) => (
@@ -8,6 +8,23 @@ const GithubIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const NAV_LINKS = [
+  { label: "Features", id: "features" },
+  { label: "How It Works", id: "how-it-works" },
+  { label: "Models", id: "models" },
+  { label: "Comparison", id: "comparison" },
+  { label: "Tech Stack", id: "tech" },
+  { label: "FAQ", id: "faq" },
+];
+
+function scrollToSection(id: string) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const offset = 64; // header height + breathing room
+  const top = el.getBoundingClientRect().top + window.scrollY - offset;
+  window.scrollTo({ top, behavior: "smooth" });
+}
+
 interface HeaderProps {
   onStart: () => void;
 }
@@ -15,6 +32,7 @@ interface HeaderProps {
 export function Header({ onStart }: HeaderProps) {
   const { scrollY } = useScroll();
   const [scrolled, setScrolled] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     setScrolled(latest > 40);
@@ -24,14 +42,15 @@ export function Header({ onStart }: HeaderProps) {
     <header
       className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "bg-[#06060a]/80 backdrop-blur-xl border-b border-white/[0.06] shadow-lg shadow-black/20"
+          ? "bg-[#06060a]/85 backdrop-blur-xl border-b border-white/[0.06] shadow-lg shadow-black/20"
           : "bg-transparent border-b border-transparent"
       }`}
     >
       <div className="max-w-6xl mx-auto px-5 sm:px-6">
         <div className="flex items-center justify-between h-14">
+
           {/* ── Brand ── */}
-          <a href="/" className="flex items-center gap-2.5 group">
+          <a href="/" className="flex items-center gap-2.5 group shrink-0">
             <img
               src="/logo.png"
               alt="BrowserLLM"
@@ -42,54 +61,73 @@ export function Header({ onStart }: HeaderProps) {
             </span>
           </a>
 
-          {/* ── Nav links ── */}
-          <nav className="hidden sm:flex items-center gap-6">
-            <a
-              href="/models"
-              className="text-[13px] text-white/35 hover:text-white/70 transition-colors font-medium"
-            >
-              Models
-            </a>
-            <a
-              href="https://github.com/GautamVhavle/BrowserLLM"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[13px] text-white/35 hover:text-white/70 transition-colors font-medium"
-            >
-              Docs
-            </a>
-            <a
-              href="https://github.com/GautamVhavle/BrowserLLM"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group flex items-center gap-1.5 text-[13px] text-white/35 hover:text-white/70 transition-colors font-medium"
-            >
-              <GithubIcon className="w-3.5 h-3.5" />
-              GitHub
-              <Star className="w-3 h-3 opacity-0 group-hover:opacity-100 group-hover:fill-yellow-400 group-hover:text-yellow-400 transition-all" />
-            </a>
+          {/* ── Desktop Nav ── */}
+          <nav className="hidden lg:flex items-center gap-0.5">
+            {NAV_LINKS.map((link) => (
+              <button
+                key={link.id}
+                onClick={() => scrollToSection(link.id)}
+                className="px-3 py-1.5 text-[13px] text-white/35 hover:text-white/75 hover:bg-white/[0.04] rounded-lg transition-all cursor-pointer font-medium"
+              >
+                {link.label}
+              </button>
+            ))}
           </nav>
 
-          {/* ── CTA ── */}
-          <div className="flex items-center gap-3">
+          {/* ── Right side ── */}
+          <div className="flex items-center gap-2 shrink-0">
             <a
               href="https://github.com/GautamVhavle/BrowserLLM"
               target="_blank"
               rel="noopener noreferrer"
-              className="sm:hidden text-white/35 hover:text-white/70 transition-colors p-1.5"
-              aria-label="GitHub"
+              className="group hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] text-white/35 hover:text-white/75 hover:bg-white/[0.04] transition-all font-medium"
             >
-              <GithubIcon className="w-4 h-4" />
+              <GithubIcon className="w-3.5 h-3.5" />
+              <span className="hidden xl:inline">GitHub</span>
+              <Star className="w-3 h-3 opacity-0 group-hover:opacity-100 group-hover:fill-yellow-400 group-hover:text-yellow-400 transition-all" />
             </a>
             <button
               onClick={onStart}
-              className="px-4 py-1.5 rounded-full bg-white/[0.08] hover:bg-white/[0.14] border border-white/[0.08] hover:border-white/[0.15] text-[13px] font-medium text-white/70 hover:text-white transition-all cursor-pointer"
+              className="px-4 py-1.5 rounded-full bg-white text-[#06060a] hover:bg-white/90 text-[13px] font-semibold transition-all cursor-pointer"
             >
               Launch App
+            </button>
+            {/* Mobile menu toggle */}
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="lg:hidden p-1.5 text-white/40 hover:text-white/70 transition-colors"
+              aria-label="Toggle menu"
+            >
+              {mobileOpen ? <X className="w-4.5 h-4.5" /> : <Menu className="w-4.5 h-4.5" />}
             </button>
           </div>
         </div>
       </div>
+
+      {/* ── Mobile dropdown ── */}
+      {mobileOpen && (
+        <div className="lg:hidden border-t border-white/[0.06] bg-[#06060a]/95 backdrop-blur-xl px-5 py-4 flex flex-col gap-1">
+          {NAV_LINKS.map((link) => (
+            <button
+              key={link.id}
+              onClick={() => { scrollToSection(link.id); setMobileOpen(false); }}
+              className="text-left px-3 py-2.5 text-[14px] text-white/50 hover:text-white/80 hover:bg-white/[0.04] rounded-lg transition-all cursor-pointer font-medium"
+            >
+              {link.label}
+            </button>
+          ))}
+          <div className="h-px bg-white/[0.06] my-2" />
+          <a
+            href="https://github.com/GautamVhavle/BrowserLLM"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-3 py-2.5 text-[14px] text-white/50 hover:text-white/80 hover:bg-white/[0.04] rounded-lg transition-all font-medium"
+          >
+            <GithubIcon className="w-4 h-4" />
+            GitHub
+          </a>
+        </div>
+      )}
     </header>
   );
 }

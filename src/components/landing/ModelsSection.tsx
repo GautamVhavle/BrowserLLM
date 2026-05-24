@@ -10,7 +10,7 @@ export function ModelsSection() {
   const recommended = getRecommendedModels();
 
   return (
-    <section className="py-24 sm:py-32 px-6">
+    <section id="models" className="py-24 sm:py-32 px-6">
       <div className="max-w-6xl mx-auto">
         <SectionHeader
           label="Models"

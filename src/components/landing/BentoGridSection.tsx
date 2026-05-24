@@ -693,7 +693,7 @@ const BENTO_ITEMS: {
 
 export function BentoGridSection() {
   return (
-    <section className="py-24 sm:py-32 px-4 sm:px-6 overflow-hidden">
+    <section id="features" className="py-24 sm:py-32 px-4 sm:px-6 overflow-hidden">
       <div className="max-w-7xl mx-auto">
         <SectionHeader
           label="Why BrowserLLM"
