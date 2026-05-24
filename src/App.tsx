@@ -18,6 +18,7 @@ import { useOnlineStatus } from "./hooks/useOnlineStatus";
 import { StarField } from "./components/ui";
 import { Landing } from "./components/landing";
 import { ModelsPage } from "./pages/ModelsPage";
+import { SelectModelPage } from "./pages/SelectModelPage";
 
 const ChatPage = lazy(() => import("./pages/ChatPage"));
 
@@ -57,6 +58,7 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/models" element={<ModelsPage />} />
+        <Route path="/select-model" element={<SelectModelPage />} />
         <Route path="/chat" element={<Suspense fallback={<ChatFallback />}><ChatPage /></Suspense>} />
         <Route path="/chat/:threadId" element={<Suspense fallback={<ChatFallback />}><ChatPage /></Suspense>} />
       </Routes>
