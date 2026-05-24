@@ -1,10 +1,12 @@
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { fadeUp, stagger, defaultTransition } from "../../lib/animations";
 import { getRecommendedModels, CATEGORY_LABELS } from "../../lib/modelCatalog";
 import { SectionHeader } from "../ui/SectionHeader";
 import { Cpu, HardDrive, Layers, Box, Star, ArrowRight } from "lucide-react";
 
 export function ModelsSection() {
+  const navigate = useNavigate();
   const recommended = getRecommendedModels();
 
   return (
@@ -100,10 +102,13 @@ export function ModelsSection() {
             Llama, Qwen, Phi, Gemma, Mistral, DeepSeek, Hermes, and more.
             Filter by category, hardware requirements, and compatibility with your device.
           </p>
-          <div className="flex items-center justify-center gap-1.5 text-sm text-[#00ff88] font-mono">
+          <button
+            onClick={() => navigate("/models")}
+            className="inline-flex items-center justify-center gap-1.5 text-sm text-[#00ff88] font-mono hover:text-[#00ff88]/80 transition-colors cursor-pointer"
+          >
             <span>Explore in the Model Library</span>
             <ArrowRight className="w-4 h-4" />
-          </div>
+          </button>
         </motion.div>
       </div>
     </section>
