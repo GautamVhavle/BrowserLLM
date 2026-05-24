@@ -42,7 +42,7 @@ export function ChatWindow({ messages, isGenerating }: ChatWindowProps) {
     <div className="relative flex-1 overflow-hidden">
       <div
         ref={scrollRef}
-        className="h-full overflow-y-auto px-4 py-6 space-y-4"
+        className="h-full overflow-y-auto px-4 sm:px-6 py-6 space-y-6"
       >
         {messages.map((msg, i) => (
           <MessageBubble

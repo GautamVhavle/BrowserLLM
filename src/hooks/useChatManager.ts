@@ -13,7 +13,7 @@
  */
 import { useState, useCallback, useEffect } from "react";
 import type { ChatSession, Message } from "../types";
-import { DEFAULT_MODEL_ID } from "../lib/models";
+import { DEFAULT_MODEL_ID, getModelById } from "../lib/models";
 import {
   loadAllChats,
   saveChat,
@@ -151,7 +151,7 @@ export function useChatManager() {
       ];
 
       try {
-        const finalText = await engine.generate(history, (fullText) => {
+        const { text: finalText, stats: finalStats } = await engine.generate(history, (fullText) => {
           updateChat(activeChatId, (c) => {
             const msgs = [...c.messages];
             msgs[msgs.length - 1] = { role: "assistant", content: fullText };
@@ -159,9 +159,16 @@ export function useChatManager() {
           });
         });
 
+        // Attach final text + stats + model name to the assistant message
+        const currentModelName = getModelById(selectedModelId)?.name ?? selectedModelId;
         updateChat(activeChatId, (c) => {
           const msgs = [...c.messages];
-          msgs[msgs.length - 1] = { role: "assistant", content: finalText };
+          msgs[msgs.length - 1] = {
+            role: "assistant",
+            content: finalText,
+            modelName: currentModelName,
+            ...(finalStats ? { stats: finalStats } : {}),
+          };
           return { ...c, messages: msgs, updatedAt: Date.now() };
         });
       } catch (err) {

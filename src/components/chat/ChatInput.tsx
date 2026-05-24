@@ -6,17 +6,13 @@
  * supports vision. For text-only models it's greyed out with a tooltip.
  */
 import { useState, useRef, useEffect, type KeyboardEvent } from "react";
-import { ArrowUp, Square, Cpu, ChevronUp, Paperclip } from "lucide-react";
+import { ArrowUp, Square, Paperclip } from "lucide-react";
 
 interface ChatInputProps {
   onSend: (message: string) => void;
   disabled: boolean;
   isGenerating: boolean;
   onStop: () => void;
-  modelName: string;
-  isModelLoaded: boolean;
-  onOpenModelSelector: () => void;
-  modelSelectorDisabled?: boolean;
   placeholder?: string;
   supportsVision?: boolean;
 }
@@ -26,10 +22,6 @@ export function ChatInput({
   disabled,
   isGenerating,
   onStop,
-  modelName,
-  isModelLoaded,
-  onOpenModelSelector,
-  modelSelectorDisabled,
   placeholder,
   supportsVision = false,
 }: ChatInputProps) {
@@ -96,22 +88,6 @@ export function ChatInput({
                   </div>
                 )}
               </div>
-
-              {/* Model indicator, opens modal */}
-              <button
-                onClick={onOpenModelSelector}
-                disabled={modelSelectorDisabled}
-                className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-200 transition-colors px-2 py-1.5 rounded-lg hover:bg-white/[0.06] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-              >
-                <Cpu className="w-3 h-3 shrink-0" />
-                <span className="max-w-[100px] sm:max-w-none truncate">
-                  {modelName}
-                </span>
-                {isModelLoaded && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0" />
-                )}
-                <ChevronUp className="w-3 h-3 shrink-0" />
-              </button>
             </div>
 
             {/* Right: Submit / Stop */}

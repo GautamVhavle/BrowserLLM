@@ -9,11 +9,8 @@
  */
 import { useState, useEffect, useRef } from "react";
 import {
-  Sparkles,
   ArrowLeft,
   PanelLeft,
-  WifiOff,
-  Wifi,
   ChevronDown,
   Download,
   Check,
@@ -27,18 +24,14 @@ import { Sidebar } from "./Sidebar";
 import { ChatWindow } from "./ChatWindow";
 import { ChatInput } from "./ChatInput";
 import { EmptyState } from "./EmptyState";
-import { StatsPanel } from "./StatsPanel";
-import { ModelModal } from "./ModelModal";
 import { OnlineIndicator } from "../ui";
 import { BackgroundDownloadIndicator } from "../ui/BackgroundDownloadIndicator";
 import type {
   ChatSession,
   LoadingProgress,
-  GenerationStats,
   BackgroundDownload,
 } from "../../types";
 import { getModelById, AVAILABLE_MODELS } from "../../lib/models";
-import { useOnlineStatus } from "../../hooks/useOnlineStatus";
 import { useModelCache } from "../../hooks/useModelCache";
 
 interface ChatLayoutProps {
@@ -62,7 +55,6 @@ interface ChatLayoutProps {
   onCancelDownload: () => void;
   onStopGeneration: () => void;
   onBack: () => void;
-  lastStats: GenerationStats | null;
   backgroundDownloads: BackgroundDownload[];
   onDismissBackgroundDownload: (modelId: string) => void;
 }
@@ -120,7 +112,7 @@ function ModelDropdown({
       </button>
 
       {open && (
-        <div className="absolute top-full left-0 mt-1 w-64 bg-[#0c0c16] border border-white/[0.1] rounded-lg shadow-xl overflow-hidden z-50">
+        <div className="absolute top-full right-0 mt-1 w-64 bg-[#0c0c16] border border-white/[0.1] rounded-lg shadow-xl overflow-hidden z-50">
           {cachedModels.length > 0 && (
             <>
               <div className="px-3 py-2 border-b border-white/[0.06]">
@@ -337,32 +329,32 @@ export function ChatLayout({
   onCancelDownload,
   onStopGeneration,
   onBack,
-  lastStats,
   backgroundDownloads,
   onDismissBackgroundDownload,
 }: ChatLayoutProps) {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [modelModalOpen, setModelModalOpen] = useState(false);
-  const { isOnline, wasOffline } = useOnlineStatus();
-  const [showOnlineBanner, setShowOnlineBanner] = useState(false);
+  const pendingMessageRef = useRef<string | null>(null);
+  const sendRef = useRef(onSendMessage);
+  sendRef.current = onSendMessage;
   const model = getModelById(selectedModelId);
   const messages = activeChat?.messages ?? [];
 
   const supportsVision = model?.categories?.includes("vision") ?? false;
 
+  // Flush any pending message once the active chat is ready
   useEffect(() => {
-    if (isOnline && wasOffline) {
-      setShowOnlineBanner(true);
-      const timer = setTimeout(() => setShowOnlineBanner(false), 5000);
-      return () => clearTimeout(timer);
+    if (activeChat && pendingMessageRef.current) {
+      const msg = pendingMessageRef.current;
+      pendingMessageRef.current = null;
+      sendRef.current(msg);
     }
-  }, [isOnline, wasOffline]);
+  }, [activeChat]);
 
   const handleSend = (content: string) => {
     if (!activeChat) {
+      pendingMessageRef.current = content;
       onNewChat();
-      setTimeout(() => onSendMessage(content), 0);
       return;
     }
     onSendMessage(content);
@@ -413,45 +405,27 @@ export function ChatLayout({
 
       {/* Main area */}
       <div className="flex-1 flex flex-col min-w-0 relative w-full">
-        {/* Online/Offline banner */}
-        {!isOnline && (
-          <div className="bg-orange-500/10 border-b border-orange-500/20 px-3 sm:px-4 py-2 text-center text-xs sm:text-sm text-orange-400 flex items-center justify-center gap-2 relative z-10">
-            <WifiOff className="w-3.5 h-3.5 shrink-0" />
-            <span>You're offline. BrowserAI is running locally on your device</span>
-          </div>
-        )}
-        {isOnline && showOnlineBanner && (
-          <div className="bg-green-500/10 border-b border-green-500/20 px-3 sm:px-4 py-2 text-center text-xs sm:text-sm text-green-400 flex items-center justify-center gap-2 relative z-10 animate-pulse">
-            <Wifi className="w-3.5 h-3.5 shrink-0" />
-            <span>Back online</span>
-          </div>
-        )}
-
         {/* Header */}
-        <header className="flex items-center justify-between px-2 sm:px-4 py-2 sm:py-2.5 border-b border-white/[0.06] relative z-10">
-          <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+        <header className="flex items-center justify-between px-2 sm:px-4 py-2 border-b border-white/[0.06] relative z-10">
+          <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="text-gray-500 hover:text-gray-300 transition-colors p-1.5 rounded cursor-pointer"
+              className="text-gray-500 hover:text-gray-300 transition-colors p-1.5 rounded-lg hover:bg-white/[0.04] cursor-pointer"
             >
               <PanelLeft className="w-4 h-4" />
             </button>
             <button
               onClick={onBack}
-              className="text-gray-500 hover:text-gray-300 transition-colors p-1.5 rounded cursor-pointer"
+              className="text-gray-500 hover:text-gray-300 transition-colors p-1.5 rounded-lg hover:bg-white/[0.04] cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
-            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-              <Sparkles className="w-4 h-4 text-purple-400 shrink-0" />
-              <span className="text-sm font-medium text-white truncate max-w-[100px] sm:max-w-none">
-                {activeChat?.title ?? "BrowserAI"}
-              </span>
-            </div>
+            <span className="text-sm font-medium text-gray-300 truncate max-w-[120px] sm:max-w-[200px] ml-1">
+              {activeChat?.title ?? "BrowserAI"}
+            </span>
           </div>
-          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0">
             <OnlineIndicator />
-            {/* Model dropdown */}
             <ModelDropdown
               selectedModelId={selectedModelId}
               loadedModelId={loadedModelId}
@@ -501,19 +475,11 @@ export function ChatLayout({
               <ChatWindow messages={messages} isGenerating={isGenerating} />
             )}
 
-            {lastStats && !isGenerating && messages.length > 0 && (
-              <StatsPanel stats={lastStats} />
-            )}
-
             <ChatInput
               onSend={handleSend}
               disabled={!isModelLoaded}
               isGenerating={isGenerating}
               onStop={onStopGeneration}
-              modelName={model?.name ?? selectedModelId}
-              isModelLoaded={isModelLoaded}
-              onOpenModelSelector={() => setModelModalOpen(true)}
-              modelSelectorDisabled={isLoadingModel}
               placeholder={
                 model ? `Message ${model.name}...` : "Type a message..."
               }
@@ -522,17 +488,6 @@ export function ChatLayout({
           </>
         )}
       </div>
-
-      {/* Model selection modal */}
-      <ModelModal
-        open={modelModalOpen}
-        onClose={() => setModelModalOpen(false)}
-        selectedModelId={selectedModelId}
-        loadedModelId={loadedModelId}
-        onSelect={onSelectModel}
-        onLoadModel={onLoadModel}
-        isLoadingModel={isLoadingModel}
-      />
 
       {/* Background download indicator */}
       <BackgroundDownloadIndicator

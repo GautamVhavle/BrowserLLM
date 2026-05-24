@@ -19,7 +19,7 @@ interface LandingProps {
 
 export function Landing({ onStart }: LandingProps) {
   return (
-    <div className="relative z-10 text-white">
+    <main className="relative z-10 text-white" role="main">
       <HeroSection onStart={onStart} />
       <BentoGridSection />
       <HowItWorksSection />
@@ -30,6 +30,6 @@ export function Landing({ onStart }: LandingProps) {
       <FAQSection />
       <CtaSection onStart={onStart} />
       <Footer />
-    </div>
+    </main>
   );
 }

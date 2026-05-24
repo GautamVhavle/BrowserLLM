@@ -1,0 +1,18 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+Allow: /models
+Disallow: /chat
+Disallow: /chat/
+
+# Block crawlers from chat sessions (dynamic, private content)
+User-agent: GPTBot
+Disallow: /chat
+
+User-agent: ChatGPT-User
+Disallow: /chat
+
+User-agent: anthropic-ai
+Disallow: /chat
+
+Sitemap: https://browserllm.vercel.app/sitemap.xml

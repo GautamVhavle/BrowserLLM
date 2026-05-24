@@ -41,6 +41,8 @@ import {
   Layers,
   Globe,
   Info,
+  Loader2,
+  CircleX,
 } from "lucide-react";
 import {
   MODEL_CATALOG,
@@ -54,6 +56,7 @@ import {
 } from "../lib/modelCatalog";
 import { useHardwareDetect, type HardwareInfo } from "../hooks/useHardwareDetect";
 import { useModelCache } from "../hooks/useModelCache";
+import { useModelDownloader } from "../hooks/useModelDownloader";
 import {
   loadDefaultModelId,
   saveDefaultModelId,
@@ -182,10 +185,11 @@ function ModelDetailModal({
   isDefault,
   hardwareDetected,
   onClose,
-  onUseModel,
   onDownload,
   onDelete,
   onSetDefault,
+  isDownloading,
+  downloadProgress,
 }: {
   model: CatalogModel;
   isCompatible: boolean | null;
@@ -193,10 +197,11 @@ function ModelDetailModal({
   isDefault: boolean;
   hardwareDetected: boolean;
   onClose: () => void;
-  onUseModel: () => void;
   onDownload: () => void;
   onDelete: () => void;
   onSetDefault: () => void;
+  isDownloading?: boolean;
+  downloadProgress?: number;
 }) {
   const tierInfo = TIER_LABELS[model.hardwareTier];
 
@@ -361,15 +366,8 @@ function ModelDetailModal({
             {isCached ? (
               <>
                 <button
-                  onClick={onUseModel}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-purple-500/15 text-purple-300 border border-purple-500/25 text-sm font-medium hover:bg-purple-500/25 transition-colors cursor-pointer"
-                >
-                  <Zap className="w-3.5 h-3.5" />
-                  Open in Chat
-                </button>
-                <button
                   onClick={onSetDefault}
-                  className={`px-3 py-2.5 rounded-lg border text-sm transition-colors cursor-pointer ${
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors cursor-pointer ${
                     isDefault
                       ? "bg-purple-500/10 border-purple-500/20 text-purple-400"
                       : "bg-white/[0.04] border-white/[0.08] text-gray-400 hover:text-gray-200 hover:bg-white/[0.06]"
@@ -377,6 +375,7 @@ function ModelDetailModal({
                   title={isDefault ? "Already set as default" : "Set as default model"}
                 >
                   <Star className={`w-3.5 h-3.5 ${isDefault ? "fill-purple-400" : ""}`} />
+                  {isDefault ? "Default Model" : "Set as Default"}
                 </button>
                 <button
                   onClick={onDelete}
@@ -386,13 +385,27 @@ function ModelDetailModal({
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </>
+            ) : isDownloading ? (
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <Loader2 className="w-3.5 h-3.5 text-cyan-400 animate-spin shrink-0" />
+                  <span className="text-xs text-gray-300">Downloading...</span>
+                  <span className="text-xs text-gray-500 ml-auto">{Math.round((downloadProgress ?? 0) * 100)}%</span>
+                </div>
+                <div className="w-full bg-white/[0.06] rounded-full h-1.5 overflow-hidden">
+                  <div
+                    className="h-full bg-cyan-500 rounded-full transition-all duration-300"
+                    style={{ width: `${Math.round((downloadProgress ?? 0) * 100)}%` }}
+                  />
+                </div>
+              </div>
             ) : (
               <button
                 onClick={onDownload}
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-white/[0.06] text-gray-200 border border-white/[0.1] text-sm font-medium hover:bg-white/[0.1] transition-colors cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" />
-                Download & Use
+                Download
               </button>
             )}
           </div>
@@ -712,6 +725,7 @@ export function ModelsPage() {
   const navigate = useNavigate();
   const hardware = useHardwareDetect();
   const cache = useModelCache();
+  const downloader = useModelDownloader();
 
   const [search, setSearch] = useState("");
   const [selectedFamily, setSelectedFamily] = useState<ModelFamily | "all">("all");
@@ -731,6 +745,12 @@ export function ModelsPage() {
         .map((id) => MODEL_CATALOG.find((m) => m.id === id))
         .filter(Boolean) as CatalogModel[],
     []
+  );
+
+  // Models that are downloaded (in cache)
+  const cachedModels = useMemo(
+    () => MODEL_CATALOG.filter((m) => cache.isModelCached(m.id)),
+    [cache]
   );
 
   const filtered = useMemo(() => {
@@ -780,8 +800,12 @@ export function ModelsPage() {
   };
 
   const handleDownload = (modelId: string) => {
-    localStorage.setItem("browserai-selected-model", modelId);
-    navigate("/chat");
+    const model = MODEL_CATALOG.find((m) => m.id === modelId);
+    const name = model?.name ?? modelId;
+    downloader.startDownload(modelId, name).then(() => {
+      // Refresh cache list after download completes
+      cache.refresh();
+    });
   };
 
   const handleSetDefault = (modelId: string) => {
@@ -907,6 +931,161 @@ export function ModelsPage() {
             <HardwareDetailsPanel hardware={hardware} />
           )}
         </div>
+
+        {/* Active Downloads */}
+        {downloader.downloads.filter((d) => d.status === "downloading").length > 0 && (
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <Loader2 className="w-4 h-4 text-cyan-400 animate-spin" />
+              <h2 className="text-sm font-semibold text-white">Downloading</h2>
+            </div>
+            <div className="space-y-2">
+              {downloader.downloads
+                .filter((d) => d.status === "downloading")
+                .map((dl) => (
+                  <div
+                    key={dl.modelId}
+                    className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-white truncate">{dl.modelName}</p>
+                        <p className="text-[11px] text-gray-500 mt-0.5 truncate">{dl.text}</p>
+                      </div>
+                      <button
+                        onClick={() => downloader.cancelDownload(dl.modelId)}
+                        className="shrink-0 ml-3 p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+                        title="Cancel download"
+                      >
+                        <CircleX className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="w-full bg-white/[0.06] rounded-full h-1.5 overflow-hidden">
+                      <div
+                        className="h-full bg-cyan-500 rounded-full transition-all duration-300"
+                        style={{ width: `${Math.round(dl.progress * 100)}%` }}
+                      />
+                    </div>
+                    <p className="text-[10px] text-gray-500 mt-1.5 text-right">
+                      {Math.round(dl.progress * 100)}%
+                    </p>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
+
+        {/* Download errors / completed notifications */}
+        {downloader.downloads.filter((d) => d.status === "error" || d.status === "completed" || d.status === "cancelled").length > 0 && (
+          <div className="mb-6 space-y-2">
+            {downloader.downloads
+              .filter((d) => d.status === "error" || d.status === "completed" || d.status === "cancelled")
+              .map((dl) => (
+                <div
+                  key={dl.modelId}
+                  className={`flex items-center justify-between p-3 rounded-lg border ${
+                    dl.status === "completed"
+                      ? "bg-green-500/[0.06] border-green-500/15"
+                      : dl.status === "cancelled"
+                      ? "bg-yellow-500/[0.06] border-yellow-500/15"
+                      : "bg-red-500/[0.06] border-red-500/15"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    {dl.status === "completed" ? (
+                      <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
+                    ) : dl.status === "cancelled" ? (
+                      <AlertTriangle className="w-4 h-4 text-yellow-400 shrink-0" />
+                    ) : (
+                      <XCircle className="w-4 h-4 text-red-400 shrink-0" />
+                    )}
+                    <div className="min-w-0">
+                      <p className={`text-xs truncate ${
+                        dl.status === "completed" ? "text-green-400" :
+                        dl.status === "cancelled" ? "text-yellow-400" :
+                        "text-red-400"
+                      }`}>
+                        {dl.modelName} {dl.status === "completed" ? "downloaded successfully" : dl.status === "cancelled" ? "cancelled" : `failed: ${dl.error}`}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => downloader.dismissDownload(dl.modelId)}
+                    className="shrink-0 ml-2 text-gray-500 hover:text-gray-300 cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+          </div>
+        )}
+
+        {/* Downloaded Models */}
+        {cachedModels.length > 0 && !hasActiveFilters && (
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <Download className="w-4 h-4 text-green-400" />
+              <h2 className="text-sm font-semibold text-white">Downloaded Models</h2>
+              <span className="text-[10px] text-gray-500">({cachedModels.length} ready to use)</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {cachedModels.map((model) => (
+                <div
+                  key={model.id}
+                  className="relative bg-white/[0.02] border border-green-500/15 rounded-xl p-4 transition-all hover:bg-white/[0.04] hover:border-green-500/25"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                      <CheckCircle2 className="w-4 h-4 text-green-400" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-semibold text-white truncate">{model.name}</h3>
+                        <span className="text-[10px] text-gray-500 bg-white/[0.06] px-1.5 py-0.5 rounded shrink-0">
+                          {model.parameterCount}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-gray-500 mt-0.5">{model.provider}</p>
+                    </div>
+                    {defaultModelId === model.id && (
+                      <span className="text-[9px] text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded-full border border-purple-500/20 shrink-0">
+                        Default
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 text-[10px] text-gray-600 mt-2">
+                    <span>{(model.vramRequired / 1024).toFixed(1)} GB</span>
+                    <span className="text-gray-700/50">·</span>
+                    <span>{model.contextWindow >= 1024 ? `${(model.contextWindow / 1024).toFixed(0)}K ctx` : `${model.contextWindow} ctx`}</span>
+                    <span className="text-gray-700/50">·</span>
+                    <span>{model.quantization}</span>
+                  </div>
+                  <div className="flex items-center gap-2 mt-3">
+                    <button
+                      onClick={() => { handleSetDefault(model.id); }}
+                      className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-medium transition-colors cursor-pointer ${
+                        defaultModelId === model.id
+                          ? "bg-purple-500/10 border-purple-500/20 text-purple-400"
+                          : "border-white/[0.08] text-gray-500 hover:text-gray-300 hover:bg-white/[0.04]"
+                      }`}
+                      title={defaultModelId === model.id ? "Default model" : "Set as default"}
+                    >
+                      <Star className={`w-3.5 h-3.5 ${defaultModelId === model.id ? "fill-purple-400" : ""}`} />
+                      {defaultModelId === model.id ? "Default" : "Set Default"}
+                    </button>
+                    <button
+                      onClick={() => handleDeleteCache(model.id)}
+                      className="p-2 rounded-lg border border-white/[0.08] text-gray-500 hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/[0.06] transition-colors cursor-pointer"
+                      title="Delete from cache"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Featured Models */}
         {!hasActiveFilters && (
@@ -1118,10 +1297,11 @@ export function ModelsPage() {
           isDefault={defaultModelId === selectedModel.id}
           hardwareDetected={hardware.detected}
           onClose={() => setSelectedModel(null)}
-          onUseModel={() => { handleUseModel(selectedModel.id); setSelectedModel(null); }}
           onDownload={() => { handleDownload(selectedModel.id); setSelectedModel(null); }}
           onDelete={() => { handleDeleteCache(selectedModel.id); setSelectedModel(null); }}
           onSetDefault={() => { handleSetDefault(selectedModel.id); }}
+          isDownloading={downloader.isDownloading(selectedModel.id)}
+          downloadProgress={downloader.getDownload(selectedModel.id)?.progress ?? 0}
         />
       )}
     </div>

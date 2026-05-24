@@ -100,14 +100,22 @@ export function useWebLLM() {
         );
         workerRef.current = worker;
 
-        const engine = await CreateWebWorkerMLCEngine(worker, modelId, {
-          initProgressCallback: (report) => {
-            setLoadingProgress({
-              text: report.text,
-              progress: report.progress,
-            });
+        // Gemma 3 models use sliding window attention — WebLLM requires only
+        // one of context_window_size / sliding_window_size to be positive.
+        const needsSlidingWindowFix = modelId.toLowerCase().includes("gemma3");
+        const engine = await CreateWebWorkerMLCEngine(
+          worker,
+          modelId,
+          {
+            initProgressCallback: (report) => {
+              setLoadingProgress({
+                text: report.text,
+                progress: report.progress,
+              });
+            },
           },
-        });
+          needsSlidingWindowFix ? { context_window_size: -1, attention_sink_size: 0 } : undefined,
+        );
 
         engineRef.current = engine;
         setLoadedModelId(modelId);
@@ -155,17 +163,23 @@ export function useWebLLM() {
         );
 
         // Just download/cache the model, then dispose
-        const bgEngine = await CreateWebWorkerMLCEngine(bgWorker, modelId, {
-          initProgressCallback: (report) => {
-            setBackgroundDownloads((prev) =>
-              prev.map((d) =>
-                d.modelId === modelId
-                  ? { ...d, progress: report.progress, text: report.text }
-                  : d
-              )
-            );
+        const bgNeedsSlidingWindowFix = modelId.toLowerCase().includes("gemma3");
+        const bgEngine = await CreateWebWorkerMLCEngine(
+          bgWorker,
+          modelId,
+          {
+            initProgressCallback: (report) => {
+              setBackgroundDownloads((prev) =>
+                prev.map((d) =>
+                  d.modelId === modelId
+                    ? { ...d, progress: report.progress, text: report.text }
+                    : d
+                )
+              );
+            },
           },
-        });
+          bgNeedsSlidingWindowFix ? { context_window_size: -1, attention_sink_size: 0 } : undefined,
+        );
 
         // Model is loaded, terminate the bg engine since we just wanted to cache it
         bgEngine.unload();
@@ -204,13 +218,13 @@ export function useWebLLM() {
   /**
    * Run streaming inference against the loaded model.
    * Calls `onToken` with the accumulated reply text after each token.
-   * Returns the final complete response and updates `lastStats`.
+   * Returns the final complete response and generation stats.
    */
   const generate = useCallback(
     async (
       history: Message[],
       onToken: (fullText: string) => void
-    ): Promise<string> => {
+    ): Promise<{ text: string; stats: GenerationStats | null }> => {
       if (!engineRef.current) throw new Error("Model not loaded");
 
       abortRef.current = false;
@@ -257,6 +271,12 @@ export function useWebLLM() {
           }
         }
 
+        if (!fullReply && !abortRef.current) {
+          throw new Error(
+            "Model returned an empty response. Try reloading the model."
+          );
+        }
+
         const elapsed = performance.now() - startTime;
         const promptTokens = usageInfo?.prompt_tokens ?? 0;
         const completionTokens = usageInfo?.completion_tokens ?? tokenCount;
@@ -265,18 +285,20 @@ export function useWebLLM() {
         // Get context window from the loaded model config (default 4096)
         const contextTotal = 4096;
 
-        setLastStats({
+        const stats: GenerationStats = {
           tokensGenerated: completionTokens,
           totalTokens,
           promptTokens,
           tokensPerSecond: elapsed > 0 ? (completionTokens / (elapsed / 1000)) : 0,
           contextUsed: totalTokens,
           contextTotal,
-          systemPromptTokens: 0, // approximation updated below
+          systemPromptTokens: 0,
           generationTimeMs: elapsed,
-        });
+        };
 
-        return fullReply;
+        setLastStats(stats);
+
+        return { text: fullReply, stats };
       } finally {
         setIsGenerating(false);
       }

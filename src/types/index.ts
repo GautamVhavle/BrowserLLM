@@ -18,6 +18,10 @@ export interface Message {
   content: string;
   /** Optional file attachments (only supported by vision models). */
   attachments?: Attachment[];
+  /** Stats captured after this assistant message was generated. */
+  stats?: GenerationStats;
+  /** Name of the model that generated this response. */
+  modelName?: string;
 }
 
 /** Progress reported during model download/initialization. */

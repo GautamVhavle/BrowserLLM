@@ -74,7 +74,6 @@ export default function ChatPage() {
       onCancelDownload={manager.cancelDownload}
       onStopGeneration={manager.stopGeneration}
       onBack={() => navigate("/")}
-      lastStats={manager.lastStats}
       backgroundDownloads={manager.backgroundDownloads}
       onDismissBackgroundDownload={manager.dismissBackgroundDownload}
     />

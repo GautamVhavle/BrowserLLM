@@ -1,12 +1,15 @@
 {
   "name": "BrowserLLM — Run AI Models In Your Browser",
   "short_name": "BrowserLLM",
-  "description": "A fully local AI chatbot running LLMs in your browser via WebGPU. No servers, no API keys, 100% private.",
+  "description": "Run 100+ open-source LLMs entirely in your browser via WebGPU. No servers, no API keys, 100% private, works offline.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#06060a",
   "theme_color": "#06060a",
   "orientation": "portrait-primary",
+  "categories": ["utilities", "productivity"],
+  "lang": "en",
+  "dir": "ltr",
   "icons": [
     {
       "src": "/favicon.svg",
