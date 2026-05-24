@@ -473,14 +473,20 @@ export function ChatLayout({
           <>
             {/* Model disconnected banner — shown when model needs reload but chat history exists */}
             {!isModelLoaded && messages.length > 0 && (
-              <div className="flex items-center justify-between gap-3 px-3 sm:px-4 py-3 bg-orange-600 border-b border-orange-700">
+              <div
+                className="flex items-center justify-between gap-3 px-3 sm:px-4 py-3 border-b"
+                style={{ backgroundColor: "#ea580c", borderBottomColor: "#c2410c" }}
+              >
                 <div className="flex items-center gap-2 text-white text-xs font-medium">
                   <WifiOff className="w-3.5 h-3.5 shrink-0" />
                   <span>Model not loaded — reload to continue chatting</span>
                 </div>
                 <button
                   onClick={() => onLoadModel(selectedModelId)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/20 text-white border border-white/30 text-xs font-semibold hover:bg-white/30 transition-colors cursor-pointer shrink-0"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-xs font-semibold transition-colors cursor-pointer shrink-0"
+                  style={{ backgroundColor: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.4)" }}
+                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.35)")}
+                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.25)")}
                 >
                   <RefreshCw className="w-3 h-3" />
                   Reload
