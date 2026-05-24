@@ -1,4 +1,4 @@
-import { Brain, Heart, Star, Shield, Globe } from "lucide-react";
+import { Heart, Star, Shield, Globe } from "lucide-react";
 
 const GithubIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
@@ -17,7 +17,7 @@ export function Footer() {
           {/* Brand */}
           <div className="sm:col-span-2 lg:col-span-1">
             <div className="flex items-center gap-2.5 mb-4">
-              <Brain className="w-5 h-5 text-[#00ff88]" aria-hidden="true" />
+              <img src="/logo.png" alt="BrowserLLM" className="w-7 h-7 object-contain" />
               <span className="font-display text-lg text-white/90 font-semibold">BrowserLLM</span>
             </div>
             <p className="text-[13px] text-white/30 leading-relaxed max-w-[260px] mb-5">

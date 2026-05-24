@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/favicon.svg" width="100" alt="BrowserLLM Logo" />
+  <img src="https://raw.githubusercontent.com/GautamVhavle/BrowserLLM/main/public/logo.png" width="100" alt="BrowserLLM Logo" />
 </p>
 
 <h1 align="center">BrowserLLM</h1>
