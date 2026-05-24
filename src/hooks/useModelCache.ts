@@ -13,7 +13,8 @@ export function useModelCache() {
     setLoading(true);
     try {
       const cacheNames = await caches.keys();
-      const modelIds = new Set<string>();
+      // Count cached files per model to detect partial downloads
+      const modelFileCounts = new Map<string, number>();
 
       for (const name of cacheNames) {
         if (name.includes("webllm") || name.includes("model")) {
@@ -25,9 +26,20 @@ export function useModelCache() {
             // WebLLM caches at URLs like: https://huggingface.co/mlc-ai/<model-id>/...
             const match = url.match(/mlc-ai\/([^/]+)/);
             if (match) {
-              modelIds.add(match[1]);
+              const id = match[1];
+              modelFileCounts.set(id, (modelFileCounts.get(id) ?? 0) + 1);
             }
           }
+        }
+      }
+
+      // A fully downloaded model has config + tokenizer + wasm + weight shards (4+ files)
+      // Partially downloaded models with fewer files are incomplete and should not appear
+      const MIN_FILES_FOR_COMPLETE = 4;
+      const modelIds = new Set<string>();
+      for (const [id, count] of modelFileCounts) {
+        if (count >= MIN_FILES_FOR_COMPLETE) {
+          modelIds.add(id);
         }
       }
 

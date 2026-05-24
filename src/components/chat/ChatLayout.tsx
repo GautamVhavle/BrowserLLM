@@ -344,6 +344,13 @@ export function ChatLayout({
 
   const supportsVision = model?.categories?.includes("vision") ?? false;
 
+  // Redirect to model selector if no model loaded and no chat history
+  useEffect(() => {
+    if (!isModelLoaded && !isLoadingModel && messages.length === 0) {
+      navigate("/select-model", { replace: true });
+    }
+  }, [isModelLoaded, isLoadingModel, messages.length, navigate]);
+
   // Flush any pending message once the active chat is ready
   useEffect(() => {
     if (activeChat && pendingMessageRef.current) {
@@ -455,17 +462,6 @@ export function ChatLayout({
             error={error}
             onLoadModel={onLoadModel}
             onCancel={onCancelDownload}
-            onOpenLibrary={() => navigate("/models")}
-            onSelectModel={onSelectModel}
-          />
-        ) : !isModelLoaded && messages.length === 0 ? (
-          <ModelPickerScreen
-            selectedModelId={selectedModelId}
-            isLoadingModel={isLoadingModel}
-            loadingProgress={loadingProgress}
-            error={error}
-            onLoadModel={onLoadModel}
-            onCancel={undefined}
             onOpenLibrary={() => navigate("/models")}
             onSelectModel={onSelectModel}
           />

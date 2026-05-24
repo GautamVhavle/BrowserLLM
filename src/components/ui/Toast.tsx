@@ -23,34 +23,31 @@ function Toast({ toast, onClose }: ToastProps) {
     return () => clearTimeout(timer);
   }, [toast, onClose]);
 
-  const bgColor = {
-    success: "bg-green-500/10 border-green-500/20",
-    error: "bg-red-500/10 border-red-500/20",
-    info: "bg-blue-500/10 border-blue-500/20",
+  const styles = {
+    success: { bg: "#14532d", border: "#16a34a", text: "#86efac", icon: CheckCircle2 },
+    error:   { bg: "#450a0a", border: "#dc2626", text: "#fca5a5", icon: AlertCircle },
+    info:    { bg: "#1e1b4b", border: "#6366f1", text: "#a5b4fc", icon: Info },
   }[toast.type];
 
-  const textColor = {
-    success: "text-green-400",
-    error: "text-red-400",
-    info: "text-blue-400",
-  }[toast.type];
-
-  const Icon = {
-    success: CheckCircle2,
-    error: AlertCircle,
-    info: Info,
-  }[toast.type];
+  const Icon = styles.icon;
 
   return (
     <div
-      className={`flex items-center gap-3 rounded-lg border px-4 py-3 ${bgColor}`}
-      style={{ animation: "toast-in 0.25s ease-out" }}
+      className="flex items-center gap-3 rounded-lg px-4 py-3"
+      style={{
+        backgroundColor: styles.bg,
+        border: `1px solid ${styles.border}`,
+        animation: "toast-in 0.25s ease-out",
+      }}
     >
-      <Icon className={`w-4 h-4 ${textColor} shrink-0`} />
-      <span className={`text-sm ${textColor}`}>{toast.message}</span>
+      <Icon className="w-4 h-4 shrink-0" style={{ color: styles.text }} />
+      <span className="text-sm font-medium" style={{ color: styles.text }}>{toast.message}</span>
       <button
         onClick={() => onClose(toast.id)}
-        className={`ml-auto p-1 rounded hover:bg-white/[0.08] transition-colors cursor-pointer ${textColor} opacity-70 hover:opacity-100`}
+        className="ml-auto p-1 rounded transition-colors cursor-pointer"
+        style={{ color: styles.text, opacity: 0.7 }}
+        onMouseEnter={e => (e.currentTarget.style.opacity = "1")}
+        onMouseLeave={e => (e.currentTarget.style.opacity = "0.7")}
       >
         <X className="w-3.5 h-3.5" />
       </button>

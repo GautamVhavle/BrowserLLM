@@ -35,6 +35,7 @@ export function useWebLLM() {
   const engineRef = useRef<WebWorkerMLCEngine | null>(null);
   const abortRef = useRef(false);
   const workerRef = useRef<Worker | null>(null);
+  const loadingModelIdRef = useRef<string | null>(null);
 
   /** Verify that the browser supports WebGPU and a GPU adapter is available. */
   const checkWebGPU = useCallback(async (): Promise<boolean> => {
@@ -60,14 +61,35 @@ export function useWebLLM() {
   }, []);
 
   /** Cancel an in-progress foreground model download by terminating its worker. */
-  const cancelDownload = useCallback(() => {
+  const cancelDownload = useCallback(async () => {
     if (workerRef.current && isLoadingModel) {
+      const modelId = loadingModelIdRef.current;
       workerRef.current.terminate();
       workerRef.current = null;
       engineRef.current = null;
       setIsLoadingModel(false);
       setLoadingProgress({ text: "", progress: 0 });
       setError(null);
+
+      // Clean up partial cache entries for the cancelled model
+      if (modelId) {
+        try {
+          const names = await caches.keys();
+          for (const name of names) {
+            if (name.includes("webllm") || name.includes("model")) {
+              const cache = await caches.open(name);
+              const keys = await cache.keys();
+              for (const req of keys) {
+                if (req.url.includes(modelId)) {
+                  await cache.delete(req);
+                }
+              }
+            }
+          }
+        } catch {
+          // Cache cleanup failed, not critical
+        }
+      }
     }
   }, [isLoadingModel]);
 
@@ -90,6 +112,7 @@ export function useWebLLM() {
         workerRef.current = null;
       }
 
+      loadingModelIdRef.current = modelId;
       setIsLoadingModel(true);
       setIsModelLoaded(false);
       setLoadedModelId(null);
