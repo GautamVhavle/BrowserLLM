@@ -1,4 +1,4 @@
-import { Heart, Star, Shield, Globe } from "lucide-react";
+import { Heart, Star } from "lucide-react";
 
 const GithubIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
@@ -13,9 +13,9 @@ export function Footer() {
     <footer className="border-t border-white/[0.06] pt-16 pb-8 px-6" role="contentinfo">
       <div className="max-w-6xl mx-auto">
         {/* ── Top grid ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-14">
+        <div className="flex flex-col lg:flex-row lg:justify-between gap-10 mb-14">
           {/* Brand */}
-          <div className="sm:col-span-2 lg:col-span-1">
+          <div className="max-w-[300px]">
             <div className="flex items-center gap-2.5 mb-4">
               <img src="/logo.png" alt="BrowserLLM" className="w-7 h-7 object-contain" />
               <span className="font-display text-lg text-white/90 font-semibold">BrowserLLM</span>
@@ -35,24 +35,14 @@ export function Footer() {
             </a>
           </div>
 
-          {/* Product links */}
-          <div>
+          {/* Right columns */}
+          <div className="flex gap-16 sm:gap-20">
+            {/* Product links */}
+            <div>
             <h4 className="text-xs font-mono text-white/50 tracking-wider uppercase mb-4">Product</h4>
             <ul className="space-y-2.5">
               <li><a href="/models" className="text-[13px] text-white/30 hover:text-white/60 transition-colors">Model Library</a></li>
               <li><a href="/chat" className="text-[13px] text-white/30 hover:text-white/60 transition-colors">Chat</a></li>
-              <li>
-                <span className="inline-flex items-center gap-1.5 text-[13px] text-white/30">
-                  <Shield className="w-3 h-3 text-[#00ff88]/50" />
-                  100% Private
-                </span>
-              </li>
-              <li>
-                <span className="inline-flex items-center gap-1.5 text-[13px] text-white/30">
-                  <Globe className="w-3 h-3 text-[#00d4ff]/50" />
-                  Works Offline
-                </span>
-              </li>
             </ul>
           </div>
 
@@ -66,16 +56,6 @@ export function Footer() {
               <li><a href="https://github.com/GautamVhavle/BrowserLLM/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" className="text-[13px] text-white/30 hover:text-white/60 transition-colors">MIT License</a></li>
             </ul>
           </div>
-
-          {/* Tech */}
-          <div>
-            <h4 className="text-xs font-mono text-white/50 tracking-wider uppercase mb-4">Built With</h4>
-            <ul className="space-y-2.5">
-              <li><a href="https://github.com/mlc-ai/web-llm" target="_blank" rel="noopener noreferrer" className="text-[13px] text-white/30 hover:text-white/60 transition-colors">WebLLM (MLC-AI)</a></li>
-              <li><a href="https://react.dev" target="_blank" rel="noopener noreferrer" className="text-[13px] text-white/30 hover:text-white/60 transition-colors">React 19</a></li>
-              <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API" target="_blank" rel="noopener noreferrer" className="text-[13px] text-white/30 hover:text-white/60 transition-colors">WebGPU</a></li>
-              <li><a href="https://tailwindcss.com" target="_blank" rel="noopener noreferrer" className="text-[13px] text-white/30 hover:text-white/60 transition-colors">Tailwind CSS v4</a></li>
-            </ul>
           </div>
         </div>
 
@@ -87,7 +67,15 @@ export function Footer() {
           <p className="flex items-center gap-1.5">
             &copy; {year} BrowserLLM &middot; Made with{" "}
             <Heart className="w-3 h-3 text-red-500/70 fill-red-500/70 inline" aria-hidden="true" />{" "}
-            by Gautam Vhavle
+            by{" "}
+            <a
+              href="https://gautamvhavle.xyz/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white/20 hover:text-white/80 transition-colors font-semibold"
+            >
+              Gautam Vhavle
+            </a>
           </p>
           <p className="tracking-wider">
             Free &amp; open source &middot; MIT Licensed

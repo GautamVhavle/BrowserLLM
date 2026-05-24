@@ -25,7 +25,7 @@ export const HOW_IT_WORKS_STEPS: StepItem[] = [
     step: "01",
     icon: createElement(HardDrive, { className: "w-6 h-6" }),
     title: "Pick & Download",
-    desc: "Browse 100+ models in the Model Library, from tiny 135M to 70B powerhouses. Your chosen model is fetched once and cached in the browser's Cache API. Every visit after that loads instantly.",
+    desc: "Browse 100+ models in the Model Library, Your chosen model is fetched once and cached in the browser's Cache API. Every visit after that loads instantly.",
     detail: "4-bit quantization (q4f32) shrinks models by ~8x with minimal quality loss, making even large models browser-friendly.",
   },
   {

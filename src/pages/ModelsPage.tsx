@@ -65,7 +65,54 @@ import {
   deleteCustomModel,
   type CustomModel,
 } from "../lib/storage";
-import { Plus, ExternalLink } from "lucide-react";
+import { Plus, ExternalLink, ArrowUpDown } from "lucide-react";
+
+/** Logo image path and fallback initials for each model family */
+const FAMILY_BRAND: Record<ModelFamily, { logo: string | null; initials: string; bg: string; text: string }> = {
+  llama:     { logo: "/logos/meta-llama.png",   initials: "Ll", bg: "bg-blue-500/15",   text: "text-blue-400" },
+  qwen:      { logo: "/logos/qwen.png",         initials: "Qw", bg: "bg-violet-500/15", text: "text-violet-400" },
+  phi:       { logo: "/logos/microsoft.png",     initials: "Phi", bg: "bg-sky-500/15",   text: "text-sky-400" },
+  gemma:     { logo: "/logos/google.png",        initials: "G",  bg: "bg-cyan-500/15",   text: "text-cyan-400" },
+  mistral:   { logo: "/logos/mistral.png",       initials: "M",  bg: "bg-orange-500/15", text: "text-orange-400" },
+  deepseek:  { logo: "/logos/deepseek.png",      initials: "DS", bg: "bg-indigo-500/15", text: "text-indigo-400" },
+  smollm:    { logo: "/logos/huggingface.png",   initials: "Sm", bg: "bg-amber-500/15",  text: "text-amber-400" },
+  olmo:      { logo: "/logos/allenai.png",       initials: "O",  bg: "bg-teal-500/15",   text: "text-teal-400" },
+  stablelm:  { logo: "/logos/stability.png",     initials: "St", bg: "bg-purple-500/15", text: "text-purple-400" },
+  redpajama: { logo: "/logos/togetherai.png",    initials: "RP", bg: "bg-red-500/15",    text: "text-red-400" },
+  tinyllama: { logo: "/logos/meta-llama.png",    initials: "Tl", bg: "bg-blue-500/15",   text: "text-blue-300" },
+  ministral: { logo: "/logos/mistral.png",       initials: "Mi", bg: "bg-orange-500/15", text: "text-orange-300" },
+  hermes:    { logo: "/logos/nousresearch.png",  initials: "H",  bg: "bg-emerald-500/15",text: "text-emerald-400" },
+  other:     { logo: null,                       initials: "?",  bg: "bg-gray-500/15",   text: "text-gray-400" },
+};
+
+function FamilyLogo({ family, size = "md" }: { family: ModelFamily; size?: "sm" | "md" }) {
+  const brand = FAMILY_BRAND[family];
+  const sizeClass = size === "sm" ? "w-7 h-7" : "w-9 h-9";
+  if (brand.logo) {
+    return (
+      <img
+        src={brand.logo}
+        alt={FAMILY_LABELS[family]}
+        className={`${sizeClass} rounded-lg object-cover shrink-0`}
+      />
+    );
+  }
+  return (
+    <div className={`${sizeClass} rounded-lg ${brand.bg} flex items-center justify-center shrink-0 font-bold ${brand.text} select-none text-[11px]`}>
+      {brand.initials}
+    </div>
+  );
+}
+
+type SortOption = "name" | "size-asc" | "size-desc" | "vram-asc" | "vram-desc" | "context-desc";
+const SORT_LABELS: Record<SortOption, string> = {
+  "name": "Name (A-Z)",
+  "size-asc": "Size (smallest first)",
+  "size-desc": "Size (largest first)",
+  "vram-asc": "VRAM (lowest first)",
+  "vram-desc": "VRAM (highest first)",
+  "context-desc": "Context (largest first)",
+};
 
 const CATEGORY_ICONS: Record<ModelCategory, typeof Cpu> = {
   general: Sparkles,
@@ -101,8 +148,6 @@ function ModelCard({
   hardwareDetected: boolean;
   onClick: () => void;
 }) {
-  const CatIcon = CATEGORY_ICONS[model.categories[0]];
-
   return (
     <button
       onClick={onClick}
@@ -116,11 +161,7 @@ function ModelCard({
     >
       {/* Row 1: Icon + Name + Compatibility */}
       <div className="flex items-start gap-3">
-        <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
-          isCached ? "bg-purple-500/10" : "bg-white/[0.04]"
-        }`}>
-          <CatIcon className={`w-4 h-4 ${isCached ? "text-purple-400" : "text-gray-500"}`} />
-        </div>
+        <FamilyLogo family={model.family} />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <h3 className="text-sm font-semibold text-white truncate">{model.name}</h3>
@@ -213,9 +254,11 @@ function ModelDetailModal({
         {/* Header */}
         <div className="sticky top-0 bg-[#0a0a14]/95 backdrop-blur-md z-10 px-5 pt-5 pb-3 border-b border-white/[0.06]">
           <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-base font-bold text-white">{model.name}</h2>
+            <div className="flex items-start gap-3 min-w-0 flex-1">
+              <FamilyLogo family={model.family} />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-base font-bold text-white">{model.name}</h2>
                 <span className="text-[10px] text-gray-500 bg-white/[0.06] px-2 py-0.5 rounded">{model.parameterCount}</span>
                 {isCached && (
                   <span className="text-[10px] text-green-400 bg-green-500/10 px-2 py-0.5 rounded-full border border-green-500/20 flex items-center gap-1">
@@ -229,6 +272,7 @@ function ModelDetailModal({
                 )}
               </div>
               <p className="text-xs text-gray-500 mt-1">{model.provider} · {FAMILY_LABELS[model.family]}</p>
+              </div>
             </div>
             <button
               onClick={onClose}
@@ -738,6 +782,7 @@ export function ModelsPage() {
   const [customModels, setCustomModels] = useState<CustomModel[]>(() => loadCustomModels());
   const [showAddCustom, setShowAddCustom] = useState(false);
   const [selectedModel, setSelectedModel] = useState<CatalogModel | null>(null);
+  const [sortBy, setSortBy] = useState<SortOption>("name");
 
   const featuredModels = useMemo(
     () =>
@@ -780,6 +825,19 @@ export function ModelsPage() {
 
     return models;
   }, [search, selectedFamily, selectedCategory, selectedTier, showCompatibleOnly, hardware]);
+
+  const sorted = useMemo(() => {
+    const list = [...filtered];
+    switch (sortBy) {
+      case "name":         return list.sort((a, b) => a.name.localeCompare(b.name));
+      case "size-asc":     return list.sort((a, b) => a.parameterCountNum - b.parameterCountNum);
+      case "size-desc":    return list.sort((a, b) => b.parameterCountNum - a.parameterCountNum);
+      case "vram-asc":     return list.sort((a, b) => a.vramRequired - b.vramRequired);
+      case "vram-desc":    return list.sort((a, b) => b.vramRequired - a.vramRequired);
+      case "context-desc": return list.sort((a, b) => b.contextWindow - a.contextWindow);
+      default:             return list;
+    }
+  }, [filtered, sortBy]);
 
   const families = useMemo(() => {
     const set = new Set(MODEL_CATALOG.map((m) => m.family));
@@ -1035,9 +1093,7 @@ export function ModelsPage() {
                   className="relative bg-white/[0.02] border border-green-500/15 rounded-xl p-4 transition-all hover:bg-white/[0.04] hover:border-green-500/25"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0 mt-0.5">
-                      <CheckCircle2 className="w-4 h-4 text-green-400" />
-                    </div>
+                    <FamilyLogo family={model.family} />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <h3 className="text-sm font-semibold text-white truncate">{model.name}</h3>
@@ -1193,17 +1249,30 @@ export function ModelsPage() {
                   Compatible
                 </button>
               )}
+
+              <div className="relative">
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as SortOption)}
+                  className="appearance-none bg-white/[0.04] border border-white/[0.08] rounded-lg pl-7 pr-3 py-2 text-xs text-gray-200 focus:outline-none cursor-pointer"
+                >
+                  {(Object.keys(SORT_LABELS) as SortOption[]).map((s) => (
+                    <option key={s} value={s}>{SORT_LABELS[s]}</option>
+                  ))}
+                </select>
+                <ArrowUpDown className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-500 pointer-events-none" />
+              </div>
             </div>
           </div>
 
           <p className="text-[10px] text-gray-600 mb-3">
-            {filtered.length} of {MODEL_CATALOG.length} models
+            {sorted.length} of {MODEL_CATALOG.length} models
           </p>
         </div>
 
         {/* Model Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {filtered.map((model) => (
+          {sorted.map((model) => (
             <ModelCard
               key={model.id}
               model={model}
