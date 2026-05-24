@@ -1,0 +1,37 @@
+name: Model Request
+description: Request a new model to be added to the catalog
+labels: ["model-request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Want a model that isn't in the library yet? BrowserLLM uses the [WebLLM model catalog](https://github.com/mlc-ai/web-llm). Models must be MLC-compiled to run in the browser.
+
+  - type: input
+    id: model_name
+    attributes:
+      label: Model name
+      placeholder: e.g. Mistral 7B v0.4
+    validations:
+      required: true
+
+  - type: input
+    id: model_id
+    attributes:
+      label: WebLLM model ID (if known)
+      placeholder: e.g. Mistral-7B-Instruct-v0.4-q4f16_1-MLC
+      description: Find available IDs at https://github.com/mlc-ai/web-llm/blob/main/src/config.ts
+
+  - type: textarea
+    id: reason
+    attributes:
+      label: Why should this model be featured?
+      description: What makes it useful or unique?
+    validations:
+      required: true
+
+  - type: input
+    id: vram
+    attributes:
+      label: Approximate VRAM requirement
+      placeholder: e.g. ~4 GB

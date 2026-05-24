@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: WebGPU Browser Support
+    url: https://caniuse.com/webgpu
+    about: Check if your browser supports WebGPU before filing a compatibility issue
+  - name: WebLLM Model Catalog
+    url: https://github.com/mlc-ai/web-llm/blob/main/src/config.ts
+    about: Full list of MLC-compiled models available for browser inference
+  - name: Discussions
+    url: https://github.com/GautamVhavle/BrowserLLM/discussions
+    about: Ask questions, share ideas, or show off what you built
