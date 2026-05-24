@@ -7,6 +7,7 @@ import { HeroSection } from "./HeroSection";
 import { HowItWorksSection } from "./HowItWorksSection";
 import { TechStackSection } from "./TechStackSection";
 import { DeepDiveSection } from "./DeepDiveSection";
+import { ZeroBackendSection } from "./ZeroBackendSection";
 import { BentoGridSection } from "./BentoGridSection";
 import { ComparisonSection } from "./ComparisonSection";
 import { ModelsSection } from "./ModelsSection";
@@ -29,6 +30,7 @@ export function Landing({ onStart }: LandingProps) {
       <ComparisonSection />
       <TechStackSection />
       <DeepDiveSection />
+      <ZeroBackendSection />
       <FAQSection />
       <CtaSection onStart={onStart} />
       <Footer />

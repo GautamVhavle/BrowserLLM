@@ -68,7 +68,7 @@ export function ComparisonSection() {
           label="Comparison"
           labelColor="text-[#ff6b35]"
           title="How BrowserLLM Stacks Up"
-          subtitle="See how running AI directly in your browser compares to cloud services and local installations."
+          subtitle="See how Edge AI in your browser compares to cloud services and local installations."
         />
 
         <motion.div

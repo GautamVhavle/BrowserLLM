@@ -9,4 +9,5 @@ export { ComparisonSection } from "./ComparisonSection";
 export { ModelsSection } from "./ModelsSection";
 export { FAQSection } from "./FAQSection";
 export { CtaSection } from "./CtaSection";
+export { ZeroBackendSection } from "./ZeroBackendSection";
 export { Footer } from "./Footer";

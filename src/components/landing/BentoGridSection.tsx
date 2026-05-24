@@ -698,8 +698,8 @@ export function BentoGridSection() {
         <SectionHeader
           label="Why BrowserLLM"
           labelColor="text-[#00ff88]"
-          title="AI Without Compromise"
-          subtitle="Every feature designed around one principle: your data stays yours."
+          title="Edge AI Without Compromise"
+          subtitle="Every feature designed around one principle: your data never leaves your device."
         />
 
         <motion.div

@@ -156,7 +156,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
         >
           <div className="h-px w-16 bg-gradient-to-r from-transparent to-white/10" />
           <span className="text-[11px] font-mono text-white/20 tracking-[0.3em] uppercase">
-            AI inference in the browser
+            edge AI inference in the browser
           </span>
           <div className="h-px w-16 bg-gradient-to-l from-transparent to-white/10" />
         </motion.div>
@@ -168,8 +168,9 @@ export function HeroSection({ onStart }: HeroSectionProps) {
           className="text-center text-lg sm:text-xl md:text-[22px] text-white/40 max-w-xl mx-auto leading-relaxed mb-12 font-light tracking-wide"
         >
           Run <span className="text-white/80 font-normal">100+ open-source models</span> entirely
-          in your browser. No servers, no API keys, no data uploaded.{" "}
-          <span className="text-[#00ff88]/60">Works completely offline.</span>
+          in your browser. No servers, no API keys, no data uploaded.
+          <br />
+          <span className="text-[#00ff88]/60">Pure Edge AI. Works completely offline.</span>
         </motion.p>
 
         {/* ── CTAs ── */}
