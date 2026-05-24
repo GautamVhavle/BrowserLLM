@@ -42,7 +42,10 @@ function Toast({ toast, onClose }: ToastProps) {
   }[toast.type];
 
   return (
-    <div className={`flex items-center gap-3 rounded-lg border px-4 py-3 ${bgColor} animate-in fade-in slide-in-from-bottom-2`}>
+    <div
+      className={`flex items-center gap-3 rounded-lg border px-4 py-3 ${bgColor}`}
+      style={{ animation: "toast-in 0.25s ease-out" }}
+    >
       <Icon className={`w-4 h-4 ${textColor} shrink-0`} />
       <span className={`text-sm ${textColor}`}>{toast.message}</span>
       <button
@@ -63,6 +66,7 @@ interface ToastContainerProps {
 export function ToastContainer({ toasts, onClose }: ToastContainerProps) {
   return (
     <div className="fixed bottom-4 left-4 right-4 z-50 space-y-2 pointer-events-none">
+      <style>{`@keyframes toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }`}</style>
       {toasts.map((toast) => (
         <div key={toast.id} className="pointer-events-auto">
           <Toast toast={toast} onClose={onClose} />
