@@ -18,6 +18,8 @@ import {
   Brain,
   X,
   Cpu,
+  WifiOff,
+  RefreshCw,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
@@ -445,18 +447,7 @@ export function ChatLayout({
         </header>
 
         {/* Content area */}
-        {!isModelLoaded && !isLoadingModel ? (
-          <ModelPickerScreen
-            selectedModelId={selectedModelId}
-            isLoadingModel={isLoadingModel}
-            loadingProgress={loadingProgress}
-            error={error}
-            onLoadModel={onLoadModel}
-            onCancel={undefined}
-            onOpenLibrary={() => navigate("/models")}
-            onSelectModel={onSelectModel}
-          />
-        ) : isLoadingModel ? (
+        {isLoadingModel ? (
           <ModelPickerScreen
             selectedModelId={selectedModelId}
             isLoadingModel={true}
@@ -467,8 +458,36 @@ export function ChatLayout({
             onOpenLibrary={() => navigate("/models")}
             onSelectModel={onSelectModel}
           />
+        ) : !isModelLoaded && messages.length === 0 ? (
+          <ModelPickerScreen
+            selectedModelId={selectedModelId}
+            isLoadingModel={isLoadingModel}
+            loadingProgress={loadingProgress}
+            error={error}
+            onLoadModel={onLoadModel}
+            onCancel={undefined}
+            onOpenLibrary={() => navigate("/models")}
+            onSelectModel={onSelectModel}
+          />
         ) : (
           <>
+            {/* Model disconnected banner — shown when model needs reload but chat history exists */}
+            {!isModelLoaded && messages.length > 0 && (
+              <div className="flex items-center justify-between gap-3 px-3 sm:px-4 py-2.5 bg-orange-500/[0.08] border-b border-orange-500/20">
+                <div className="flex items-center gap-2 text-orange-400 text-xs">
+                  <WifiOff className="w-3.5 h-3.5 shrink-0" />
+                  <span>Model not loaded. Reload to continue chatting.</span>
+                </div>
+                <button
+                  onClick={() => onLoadModel(selectedModelId)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-500/15 text-orange-300 border border-orange-500/25 text-xs font-medium hover:bg-orange-500/25 transition-colors cursor-pointer shrink-0"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  Reload
+                </button>
+              </div>
+            )}
+
             {messages.length === 0 ? (
               <EmptyState modelId={selectedModelId} onSuggestion={handleSend} />
             ) : (
@@ -481,7 +500,9 @@ export function ChatLayout({
               isGenerating={isGenerating}
               onStop={onStopGeneration}
               placeholder={
-                model ? `Message ${model.name}...` : "Type a message..."
+                !isModelLoaded
+                  ? "Reload model to send messages..."
+                  : model ? `Message ${model.name}...` : "Type a message..."
               }
               supportsVision={supportsVision}
             />

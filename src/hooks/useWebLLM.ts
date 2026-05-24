@@ -10,13 +10,15 @@
  * The engine runs inside a Web Worker (`engine.worker.ts`) so the main
  * thread stays responsive during inference.
  */
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import {
   CreateWebWorkerMLCEngine,
   type WebWorkerMLCEngine,
   type ChatCompletionMessageParam,
 } from "@mlc-ai/web-llm";
 import type { Message, LoadingProgress, GenerationStats, BackgroundDownload } from "../types";
+
+const SESSION_KEY = "browserai-loaded-model";
 
 export function useWebLLM() {
   const [isModelLoaded, setIsModelLoaded] = useState(false);
@@ -120,6 +122,8 @@ export function useWebLLM() {
         engineRef.current = engine;
         setLoadedModelId(modelId);
         setIsModelLoaded(true);
+        // Persist so we can auto-reload from cache after page refresh
+        try { sessionStorage.setItem(SESSION_KEY, modelId); } catch {}
       } catch (err) {
         // Don't show error if worker was terminated (cancelled)
         if (workerRef.current) {
@@ -133,6 +137,19 @@ export function useWebLLM() {
     },
     [checkWebGPU, loadedModelId, isModelLoaded]
   );
+
+  // Auto-reload model from cache after page refresh / tab restore
+  const autoLoadFired = useRef(false);
+  useEffect(() => {
+    if (autoLoadFired.current || isModelLoaded || isLoadingModel) return;
+    autoLoadFired.current = true;
+    try {
+      const lastModel = sessionStorage.getItem(SESSION_KEY);
+      if (lastModel) {
+        loadModel(lastModel);
+      }
+    } catch {}
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   /**
    * Download a model in the background while the user chats with the current model.
