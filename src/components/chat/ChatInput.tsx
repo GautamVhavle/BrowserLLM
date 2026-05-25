@@ -71,7 +71,7 @@ export function ChatInput({
             placeholder={placeholder ?? "Type a message..."}
             disabled={disabled && !isGenerating}
             rows={1}
-            className="w-full resize-none bg-transparent text-gray-200 placeholder-gray-600 px-3 sm:px-4 pt-3 pb-1 text-base sm:text-sm focus:outline-none disabled:opacity-50"
+            className="w-full resize-none bg-transparent text-gray-200 placeholder-gray-600 px-3 sm:px-4 pt-3 pb-1 text-base focus:outline-none disabled:opacity-50"
           />
 
           {/* Footer */}

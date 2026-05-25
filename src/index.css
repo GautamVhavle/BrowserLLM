@@ -137,11 +137,21 @@ body {
   pointer-events: none;
 }
 
+/* Prevent double-tap zoom on interactive elements */
+*, *::before, *::after {
+  touch-action: manipulation;
+}
+
 /* Prevent iOS zoom on input focus */
-@media (max-width: 640px) {
-  input,
-  textarea,
-  select {
-    font-size: 16px;
+input,
+textarea,
+select {
+  font-size: 16px !important;
+}
+
+@supports (-webkit-touch-callout: none) {
+  /* Extra iOS Safari protection */
+  body {
+    -webkit-text-size-adjust: 100%;
   }
 }
