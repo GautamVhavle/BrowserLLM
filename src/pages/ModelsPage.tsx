@@ -57,6 +57,7 @@ import {
 import { useHardwareDetect, type HardwareInfo } from "../hooks/useHardwareDetect";
 import { useModelCache } from "../hooks/useModelCache";
 import { useModelDownloader } from "../hooks/useModelDownloader";
+import { useSEO } from "../hooks/useSEO";
 import { useToast } from "../hooks/useToast";
 import { ToastContainer } from "../components/ui/Toast";
 import {
@@ -776,6 +777,12 @@ function AddCustomModelModal({
 export function ModelsPage() {
   const navigate = useNavigate();
   const hardware = useHardwareDetect();
+
+  useSEO({
+    title: "100+ AI Models",
+    description: "Browse and download 100+ open-source AI models for your browser. Llama, Qwen, Phi, Gemma, Mistral, DeepSeek and more. Filter by category, size, and hardware compatibility.",
+    path: "/models",
+  });
   const cache = useModelCache();
   const downloader = useModelDownloader();
   const toast = useToast();

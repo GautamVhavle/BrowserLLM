@@ -15,6 +15,7 @@ import { lazy, Suspense } from "react";
 import { WifiOff, Loader2 } from "lucide-react";
 import { Analytics } from "@vercel/analytics/react";
 import { useOnlineStatus } from "./hooks/useOnlineStatus";
+import { useSEO } from "./hooks/useSEO";
 import { StarField } from "./components/ui";
 import { Landing } from "./components/landing";
 import { ModelsPage } from "./pages/ModelsPage";
@@ -25,6 +26,12 @@ const ChatPage = lazy(() => import("./pages/ChatPage"));
 function LandingPage() {
   const navigate = useNavigate();
   const { isOnline } = useOnlineStatus();
+
+  useSEO({
+    title: "BrowserLLM - Run AI Models Directly In Your Browser | Free, Private, Offline",
+    description: "Run 100+ open-source LLMs entirely in your browser via WebGPU. No servers, no API keys, 100% private, works offline. Llama, Qwen, Phi, Gemma, Mistral, DeepSeek and more.",
+    path: "/",
+  });
 
   return (
     <div className="min-h-screen bg-[#06060a] overflow-x-hidden">

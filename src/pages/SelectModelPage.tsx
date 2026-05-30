@@ -3,11 +3,18 @@ import { useNavigate } from "react-router-dom";
 import { Brain, Cpu, Check, ArrowLeft, Library, Download } from "lucide-react";
 import { AVAILABLE_MODELS, getModelById, DEFAULT_MODEL_ID } from "../lib/models";
 import { useModelCache } from "../hooks/useModelCache";
+import { useSEO } from "../hooks/useSEO";
 import { saveDefaultModelId } from "../lib/storage";
 
 export function SelectModelPage() {
   const navigate = useNavigate();
   const cache = useModelCache();
+
+  useSEO({
+    title: "Select Model",
+    description: "Choose an AI model to start a private conversation in your browser. Select from your downloaded models or browse the library.",
+    path: "/select-model",
+  });
   const cachedModels = AVAILABLE_MODELS.filter((m) => cache.isModelCached(m.id));
 
   const [selectedModelId, setSelectedModelId] = useState<string>(() => {

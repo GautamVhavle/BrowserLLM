@@ -1,12 +1,20 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useCallback } from "react";
 import { useChatManager } from "../hooks/useChatManager";
+import { useSEO } from "../hooks/useSEO";
 import { ChatLayout } from "../components/chat";
 
 export default function ChatPage() {
   const navigate = useNavigate();
   const { threadId } = useParams<{ threadId: string }>();
   const manager = useChatManager();
+
+  useSEO({
+    title: "AI Chat",
+    description: "Chat with AI models running entirely in your browser. Private, offline, and free.",
+    path: "/chat",
+    noindex: true,
+  });
 
   // If no threadId in URL, create a new chat and redirect
   useEffect(() => {

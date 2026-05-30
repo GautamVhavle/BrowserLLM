@@ -1,21 +1,55 @@
 {
-  "name": "BrowserLLM — Run AI Models In Your Browser",
+  "name": "BrowserLLM - Run AI Models In Your Browser",
   "short_name": "BrowserLLM",
   "description": "Run 100+ open-source LLMs entirely in your browser via WebGPU. No servers, no API keys, 100% private, works offline.",
   "start_url": "/",
+  "scope": "/",
+  "id": "/",
   "display": "standalone",
   "background_color": "#06060a",
   "theme_color": "#06060a",
   "orientation": "portrait-primary",
-  "categories": ["utilities", "productivity"],
+  "categories": ["utilities", "productivity", "education"],
   "lang": "en",
   "dir": "ltr",
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/favicon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "645x645",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/title.png",
+      "sizes": "2880x1636",
+      "type": "image/png",
+      "label": "BrowserLLM landing page showing AI inference in the browser"
+    }
+  ],
+  "related_applications": [],
+  "shortcuts": [
+    {
+      "name": "Model Library",
+      "short_name": "Models",
+      "description": "Browse 100+ AI models",
+      "url": "/models",
+      "icons": [{ "src": "/logo.png", "sizes": "645x645" }]
+    },
+    {
+      "name": "New Chat",
+      "short_name": "Chat",
+      "description": "Start a new AI conversation",
+      "url": "/chat",
+      "icons": [{ "src": "/logo.png", "sizes": "645x645" }]
     }
   ]
 }

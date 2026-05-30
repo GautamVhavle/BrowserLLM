@@ -1,46 +1,61 @@
 <!doctype html>
-<html lang="en" style="background:#06060a">
+<html lang="en" dir="ltr" style="background:#06060a">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/manifest.json" />
-    <link rel="apple-touch-icon" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <link rel="apple-touch-icon" href="/logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <!-- DNS Prefetch & Preconnect for critical resources -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
 
     <!-- Primary Meta Tags -->
     <title>BrowserLLM - Run AI Models Directly In Your Browser | Free, Private, Offline</title>
-    <meta name="description" content="Run 100+ open-source LLMs entirely in your browser via WebGPU. No servers, no API keys, 100% private, works offline. Llama, Qwen, Phi, Gemma, Mistral, DeepSeek and more." />
-    <meta name="keywords" content="browser LLM, run AI in browser, WebGPU LLM, local AI chatbot, private AI, offline AI, open source LLM, browser AI, run LLM locally, free AI chatbot, no server AI, WebGPU inference, in-browser AI, client-side LLM, BrowserLLM" />
+    <meta name="description" content="Run 100+ open-source LLMs entirely in your browser via WebGPU. No servers, no API keys, 100% private, works offline. Supports Llama, Qwen, Phi, Gemma, Mistral, DeepSeek and more. Free forever." />
+    <meta name="keywords" content="browser LLM, run AI in browser, WebGPU LLM, local AI chatbot, private AI, offline AI, open source LLM, browser AI, run LLM locally, free AI chatbot, no server AI, WebGPU inference, in-browser AI, client-side LLM, BrowserLLM, edge AI, run AI offline, AI without API, WebGPU AI, local language model, browser chatbot, private chatbot, AI privacy, run llama in browser, run qwen in browser" />
     <meta name="author" content="Gautam Vhavle" />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
-    <link rel="canonical" href="https://browserllm.vercel.app/" />
+    <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="bingbot" content="index, follow" />
+    <link rel="canonical" href="https://browserllm.xyz/" />
+    <link rel="alternate" hreflang="en" href="https://browserllm.xyz/" />
+    <link rel="alternate" hreflang="x-default" href="https://browserllm.xyz/" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://browserllm.vercel.app/" />
+    <meta property="og:url" content="https://browserllm.xyz/" />
     <meta property="og:title" content="BrowserLLM - Run AI Models Directly In Your Browser" />
-    <meta property="og:description" content="Run 100+ open-source LLMs entirely in your browser via WebGPU. No servers, no API keys, 100% private, works offline." />
+    <meta property="og:description" content="Run 100+ open-source LLMs entirely in your browser via WebGPU. No servers, no API keys, 100% private, works offline. Llama, Qwen, Phi, Gemma, Mistral, DeepSeek and more." />
     <meta property="og:site_name" content="BrowserLLM" />
     <meta property="og:locale" content="en_US" />
-    <meta property="og:image" content="https://browserllm.vercel.app/title.png" />
+    <meta property="og:image" content="https://browserllm.xyz/title.png" />
     <meta property="og:image:alt" content="BrowserLLM - Run AI models directly in your browser with WebGPU" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="2880" />
+    <meta property="og:image:height" content="1636" />
 
     <!-- Twitter / X -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:url" content="https://browserllm.vercel.app/" />
+    <meta name="twitter:url" content="https://browserllm.xyz/" />
     <meta name="twitter:title" content="BrowserLLM - Run AI Models Directly In Your Browser" />
     <meta name="twitter:description" content="Run 100+ open-source LLMs entirely in your browser via WebGPU. No servers, no API keys, 100% private, works offline." />
-    <meta name="twitter:image" content="https://browserllm.vercel.app/title.png" />
+    <meta name="twitter:image" content="https://browserllm.xyz/title.png" />
     <meta name="twitter:image:alt" content="BrowserLLM - Run AI models directly in your browser with WebGPU" />
+    <meta name="twitter:creator" content="@GautamVhavle" />
 
     <!-- PWA / Theme -->
-    <meta name="theme-color" content="#06060a" />
+    <meta name="theme-color" content="#06060a" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#06060a" media="(prefers-color-scheme: light)" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="BrowserLLM" />
     <meta name="application-name" content="BrowserLLM" />
-    <meta name="generator" content="Vite" />
+    <meta name="msapplication-TileColor" content="#06060a" />
+    <meta name="msapplication-config" content="none" />
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -53,7 +68,7 @@
       "@context": "https://schema.org",
       "@type": "WebApplication",
       "name": "BrowserLLM",
-      "url": "https://browserllm.vercel.app/",
+      "url": "https://browserllm.xyz/",
       "description": "Run 100+ open-source LLMs entirely in your browser via WebGPU. No servers, no API keys, 100% private, works offline.",
       "applicationCategory": "UtilitiesApplication",
       "operatingSystem": "Any (browser-based)",
@@ -69,14 +84,14 @@
       },
       "featureList": [
         "Run 100+ open-source LLMs in the browser",
-        "Complete privacy — no data leaves your device",
+        "Complete privacy - no data leaves your device",
         "Works fully offline after first model download",
         "WebGPU-accelerated inference at near-native speed",
-        "Zero cost — no API keys or subscriptions",
-        "PWA support — install as a native app",
+        "Zero cost - no API keys or subscriptions",
+        "PWA support - install as a native app",
         "Models from Llama, Qwen, Phi, Gemma, Mistral, DeepSeek and more"
       ],
-      "screenshot": "https://browserllm.vercel.app/favicon.svg",
+      "screenshot": "https://browserllm.xyz/title.png",
       "softwareVersion": "1.0",
       "isAccessibleForFree": true
     }
@@ -109,7 +124,7 @@
           "name": "Is my data really private when using BrowserLLM?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes. All inference happens locally on your device. No data is sent to any server — there is no server. Your conversations are stored only in your browser's local storage. You can verify this by going offline after the first model download — everything still works."
+            "text": "Yes. All inference happens locally on your device. No data is sent to any server - there is no server. Your conversations are stored only in your browser's local storage. You can verify this by going offline after the first model download - everything still works."
           }
         },
         {
@@ -117,7 +132,7 @@
           "name": "How does BrowserLLM compare to ChatGPT or Claude?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Cloud-based models like GPT-4 or Claude are more powerful for complex reasoning tasks. BrowserLLM trades some capability for complete privacy, zero cost, offline access, and no accounts needed. For many everyday tasks — writing, coding help, brainstorming — local models are more than capable."
+            "text": "Cloud-based models like GPT-4 or Claude are more powerful for complex reasoning tasks. BrowserLLM trades some capability for complete privacy, zero cost, offline access, and no accounts needed. For many everyday tasks - writing, coding help, brainstorming - local models are more than capable."
           }
         },
         {
@@ -154,8 +169,8 @@
       "@context": "https://schema.org",
       "@type": "Organization",
       "name": "BrowserLLM",
-      "url": "https://browserllm.vercel.app/",
-      "logo": "https://browserllm.vercel.app/favicon.svg",
+      "url": "https://browserllm.xyz/",
+      "logo": "https://browserllm.xyz/logo.png",
       "sameAs": [
         "https://github.com/GautamVhavle/BrowserLLM"
       ],
@@ -165,13 +180,116 @@
       }
     }
     </script>
+
+    <!-- Structured Data: WebSite with SearchAction -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "BrowserLLM",
+      "alternateName": ["Browser LLM", "BrowserAI"],
+      "url": "https://browserllm.xyz/",
+      "description": "Run 100+ open-source LLMs entirely in your browser via WebGPU. No servers, no API keys, 100% private, works offline.",
+      "inLanguage": "en",
+      "publisher": {
+        "@type": "Organization",
+        "name": "BrowserLLM",
+        "url": "https://browserllm.xyz/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://browserllm.xyz/logo.png"
+        }
+      }
+    }
+    </script>
+
+    <!-- Structured Data: BreadcrumbList -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://browserllm.xyz/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Model Library",
+          "item": "https://browserllm.xyz/models"
+        }
+      ]
+    }
+    </script>
+
+    <!-- Structured Data: SoftwareApplication -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "BrowserLLM",
+      "url": "https://browserllm.xyz/",
+      "applicationCategory": "UtilitiesApplication",
+      "applicationSubCategory": "Artificial Intelligence",
+      "operatingSystem": "Any",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD",
+        "availability": "https://schema.org/InStock"
+      },
+      "featureList": [
+        "Run 100+ open-source AI models in the browser",
+        "Complete privacy - all processing on-device",
+        "Works fully offline after first download",
+        "WebGPU-accelerated near-native GPU performance",
+        "Free forever - no API keys or subscriptions",
+        "PWA support - install as a native app",
+        "Llama, Qwen, Phi, Gemma, Mistral, DeepSeek models"
+      ],
+      "screenshot": "https://browserllm.xyz/title.png",
+      "downloadUrl": "https://browserllm.xyz/",
+      "softwareVersion": "1.0",
+      "isAccessibleForFree": true,
+      "author": {
+        "@type": "Person",
+        "name": "Gautam Vhavle",
+        "url": "https://gautamvhavle.xyz/"
+      }
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>
     <noscript>
       <div style="padding:2rem;text-align:center;color:#fff;background:#06060a;min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;font-family:system-ui,sans-serif;">
-        <h1>BrowserLLM</h1>
-        <p style="max-width:500px;margin:1rem auto;color:#999;">Run 100+ open-source AI models directly in your browser. No servers, no API keys, completely private and works offline. Please enable JavaScript to use BrowserLLM.</p>
+        <h1>BrowserLLM - Run AI Models Directly In Your Browser</h1>
+        <p style="max-width:600px;margin:1rem auto;color:#999;">Run 100+ open-source AI models directly in your browser using WebGPU. No servers, no API keys, completely private and works offline.</p>
+        <nav style="margin-top:1rem;">
+          <a href="/models" style="color:#a78bfa;margin:0 1rem;">Model Library</a>
+          <a href="/chat" style="color:#a78bfa;margin:0 1rem;">Chat</a>
+        </nav>
+        <section style="max-width:600px;margin:2rem auto;color:#777;text-align:left;">
+          <h2 style="color:#ccc;font-size:1.2rem;">Features</h2>
+          <ul style="line-height:1.8;">
+            <li>100+ open-source LLMs including Llama, Qwen, Phi, Gemma, Mistral, DeepSeek</li>
+            <li>100% private - your data never leaves your device</li>
+            <li>Works completely offline after first model download</li>
+            <li>WebGPU-powered near-native GPU performance</li>
+            <li>Free forever - no API keys, no subscriptions, no per-token charges</li>
+            <li>PWA support - install as a native app on any device</li>
+          </ul>
+          <h2 style="color:#ccc;font-size:1.2rem;">How It Works</h2>
+          <p>BrowserLLM uses WebGPU, the next-generation GPU API for the web, combined with 4-bit quantization and WebAssembly to run large language models at near-native speed directly in your browser tab. Models are cached locally after the first download.</p>
+          <h2 style="color:#ccc;font-size:1.2rem;">FAQ</h2>
+          <p><strong>How can an AI model run in a browser?</strong> Modern browsers support WebGPU, giving web apps direct GPU access. Combined with 4-bit quantization (8x compression) and WebAssembly, models with billions of parameters run in a browser tab.</p>
+          <p><strong>Is my data private?</strong> Yes. All processing happens on your device. There is no server - your conversations never leave your browser.</p>
+          <p><strong>Is it free?</strong> Yes, forever. No API keys, no subscriptions. The computation uses your own GPU.</p>
+        </section>
+        <p style="color:#555;margin-top:2rem;">Please enable JavaScript to use BrowserLLM.</p>
       </div>
     </noscript>
     <script type="module" src="/src/main.tsx"></script>

@@ -2,10 +2,20 @@
 User-agent: *
 Allow: /
 Allow: /models
+Allow: /select-model
 Disallow: /chat
 Disallow: /chat/
 
-# Block crawlers from chat sessions (dynamic, private content)
+# Allow search engine bots to crawl all public pages
+User-agent: Googlebot
+Allow: /
+Disallow: /chat
+
+User-agent: Bingbot
+Allow: /
+Disallow: /chat
+
+# Block AI training crawlers from chat sessions (private content)
 User-agent: GPTBot
 Disallow: /chat
 
@@ -15,4 +25,10 @@ Disallow: /chat
 User-agent: anthropic-ai
 Disallow: /chat
 
-Sitemap: https://browserllm.vercel.app/sitemap.xml
+User-agent: CCBot
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /chat
+
+Sitemap: https://browserllm.xyz/sitemap.xml
