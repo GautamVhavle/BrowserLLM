@@ -154,11 +154,11 @@ export function HeroSection({ onStart }: HeroSectionProps) {
           transition={heroTransition}
           className="flex items-center justify-center gap-4 mb-8"
         >
-          <div className="h-px w-16 bg-gradient-to-r from-transparent to-white/10" />
-          <span className="text-[11px] font-mono text-white/20 tracking-[0.3em] uppercase">
+          <div className="h-px flex-1 max-w-[64px] bg-gradient-to-r from-transparent to-white/10" />
+          <span className="text-[11px] font-mono text-white/20 tracking-[0.3em] uppercase whitespace-nowrap">
             edge AI inference in the browser
           </span>
-          <div className="h-px w-16 bg-gradient-to-l from-transparent to-white/10" />
+          <div className="h-px flex-1 max-w-[64px] bg-gradient-to-l from-transparent to-white/10" />
         </motion.div>
 
         {/* ── Subtitle ── */}
