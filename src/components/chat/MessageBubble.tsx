@@ -10,7 +10,7 @@
 import { useState, memo } from "react";
 import { createPortal } from "react-dom";
 import type { Message } from "../../types";
-import { Sparkles, User, Copy, Check, Zap, ChevronRight } from "lucide-react";
+import { Sparkles, User, Copy, Check, Zap, ChevronRight, Pencil, RefreshCw } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { StatsModal } from "./StatsPanel";
@@ -18,6 +18,8 @@ import { StatsModal } from "./StatsPanel";
 interface MessageBubbleProps {
   message: Message;
   isStreaming?: boolean;
+  onEdit?: (content: string) => void;
+  onRegenerate?: () => void;
 }
 
 function CodeBlock({
@@ -85,10 +87,14 @@ function CopyCodeButton({ text }: { text: string }) {
 export const MessageBubble = memo(function MessageBubble({
   message,
   isStreaming,
+  onEdit,
+  onRegenerate,
 }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const [copied, setCopied] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(message.content);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(message.content);
@@ -106,9 +112,59 @@ export const MessageBubble = memo(function MessageBubble({
           </div>
           <div className="flex-1 min-w-0 pt-0.5 text-right">
             <p className="text-[11px] font-medium text-gray-500 mb-1">You</p>
-            <p className="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap break-words">
-              {message.content}
-            </p>
+            {editing ? (
+              <div className="space-y-2">
+                <textarea
+                  value={draft}
+                  onChange={(event) => setDraft(event.target.value)}
+                  rows={3}
+                  className="w-full resize-none rounded-lg bg-white/[0.04] border border-white/[0.08] text-sm text-gray-200 px-3 py-2 focus:outline-none focus:border-purple-500/30"
+                />
+                <div className="flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDraft(message.content);
+                      setEditing(false);
+                    }}
+                    className="text-xs text-gray-400 hover:text-gray-200 px-2 py-1 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!draft.trim()}
+                    onClick={() => {
+                      const next = draft.trim();
+                      setEditing(false);
+                      onEdit?.(next);
+                    }}
+                    className="text-xs text-white bg-purple-500 hover:bg-purple-400 disabled:opacity-40 px-2.5 py-1 rounded-md cursor-pointer"
+                  >
+                    Save and resend
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap break-words">
+                {message.content}
+              </p>
+            )}
+            {onEdit && !editing && (
+              <div className="mt-1 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDraft(message.content);
+                    setEditing(true);
+                  }}
+                  className="inline-flex items-center gap-1 text-[10px] text-gray-500 hover:text-gray-300 cursor-pointer"
+                >
+                  <Pencil className="w-3 h-3" />
+                  Edit
+                </button>
+              </div>
+            )}
           </div>
         </div>
       ) : (
@@ -247,6 +303,17 @@ export const MessageBubble = memo(function MessageBubble({
                   </button>
                 ) : null}
 
+                {onRegenerate && (
+                  <button
+                    type="button"
+                    onClick={onRegenerate}
+                    className="inline-flex items-center gap-1 text-gray-500 hover:text-gray-300 cursor-pointer"
+                    title="Regenerate"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                    Regenerate
+                  </button>
+                )}
                 <button
                   onClick={handleCopy}
                   className="opacity-0 group-hover:opacity-100 text-gray-600 hover:text-gray-300 transition-all p-0.5 rounded cursor-pointer"

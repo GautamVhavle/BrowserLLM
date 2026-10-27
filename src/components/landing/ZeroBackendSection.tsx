@@ -19,7 +19,7 @@ const FACTS = [
   {
     icon: <WifiOff className="w-5 h-5" />,
     title: "Works Offline",
-    desc: "Disconnect your internet. The app still works. Models run on YOUR GPU via WebGPU. Your data never touches a wire.",
+    desc: "After this site and a model are saved, you can disconnect. Inference stays on your GPU.",
     accent: "#00d4ff",
   },
   {
@@ -31,7 +31,7 @@ const FACTS = [
   {
     icon: <Lock className="w-5 h-5" />,
     title: "Unbreakable Privacy",
-    desc: "We can't see your data even if we wanted to. There's no server to log to, no database to query, no analytics pipeline. Mathematically private.",
+    desc: "Chats stay in this browser and are not sent to a model API. The site can count an anonymous page view. The conversation itself is not included.",
     accent: "#a78bfa",
   },
   {

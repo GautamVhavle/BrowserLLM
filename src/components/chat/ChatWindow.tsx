@@ -10,33 +10,54 @@ import { ArrowDown } from "lucide-react";
 interface ChatWindowProps {
   messages: Message[];
   isGenerating: boolean;
+  condensed?: boolean;
+  canRevise?: boolean;
+  onEditLastUser?: (content: string) => void;
+  onRegenerate?: () => void;
 }
 
-export function ChatWindow({ messages, isGenerating }: ChatWindowProps) {
+export function ChatWindow({
+  messages,
+  isGenerating,
+  condensed = false,
+  canRevise = false,
+  onEditLastUser,
+  onRegenerate,
+}: ChatWindowProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const stickRef = useRef(true);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
 
   const scrollToBottom = useCallback(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    const el = scrollRef.current;
+    stickRef.current = true;
+    if (el) el.scrollTop = el.scrollHeight;
   }, []);
 
-  // Auto-scroll on new messages
+  // Follow the reply only while the user is already at the bottom.
+  // scrollTop (not smooth scrollIntoView) so the scroll event doesn't
+  // look like the user left the bottom mid-animation.
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, scrollToBottom]);
+    if (!stickRef.current) return;
+    const el = scrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [messages]);
 
-  // Track scroll position to show/hide scroll button
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     const handleScroll = () => {
       const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+      stickRef.current = distFromBottom < 80;
       setShowScrollBtn(distFromBottom > 100);
     };
     el.addEventListener("scroll", handleScroll);
     return () => el.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const lastUser = messages.findLastIndex((item) => item.role === "user");
+  const lastAssistant = messages.length - 1;
 
   return (
     <div className="relative flex-1 overflow-hidden">
@@ -44,17 +65,33 @@ export function ChatWindow({ messages, isGenerating }: ChatWindowProps) {
         ref={scrollRef}
         className="h-full overflow-y-auto px-4 sm:px-6 py-6 space-y-6"
       >
-        {messages.map((msg, i) => (
-          <MessageBubble
-            key={i}
-            message={msg}
-            isStreaming={
-              isGenerating &&
-              msg.role === "assistant" &&
-              i === messages.length - 1
-            }
-          />
-        ))}
+        {condensed && (
+          <p className="max-w-3xl mx-auto text-center text-[11px] text-gray-500">
+            Earlier messages are condensed in the model's memory.
+          </p>
+        )}
+        {messages.map((msg, i) => {
+          return (
+            <MessageBubble
+              key={i}
+              message={msg}
+              isStreaming={
+                isGenerating &&
+                msg.role === "assistant" &&
+                i === messages.length - 1
+              }
+              onEdit={canRevise && i === lastUser ? onEditLastUser : undefined}
+              onRegenerate={
+                canRevise &&
+                i === lastAssistant &&
+                msg.role === "assistant" &&
+                msg.content
+                  ? onRegenerate
+                  : undefined
+              }
+            />
+          );
+        })}
         <div ref={bottomRef} />
       </div>
 

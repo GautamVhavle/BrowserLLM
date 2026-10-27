@@ -15,7 +15,7 @@ const FAQS = [
   },
   {
     q: "Is my data really private?",
-    a: "Absolutely. All inference happens locally on your device. No data is sent to any server, there is no server. Your conversations are stored only in your browser's local storage. You can verify this by going offline after the first model download, everything still works.",
+    a: "The chat runs on your device and is stored in this browser. It is not sent to a model API. The site can count an anonymous page view, and that count does not include the conversation. After the app and a model are saved, you can disconnect and keep chatting.",
   },
   {
     q: "How does this compare to ChatGPT or Claude?",
@@ -27,7 +27,11 @@ const FAQS = [
   },
   {
     q: "Which models are available?",
-    a: "Over 100 models from families like Llama, Qwen, Phi, Gemma, Mistral, DeepSeek, SmolLM, and more. Models range from tiny 135M parameter models to 70B parameter powerhouses. You can filter by category (general, coding, math, reasoning), size, and hardware compatibility.",
+    a: "About 150 in this build, from SmolLM 135M up to 70B-class models, including Qwen 3.5, Llama 3, Phi, Gemma 3, and Mistral. Gemma 4 is not included yet. You can filter by family, category, size, and hardware.",
+  },
+  {
+    q: "What happens in a long chat?",
+    a: "The whole thread stays on screen and in this browser. When it no longer fits the model's context window, older turns are condensed into a short memory so the model can continue. Edit and Regenerate appear after a model is loaded. There is no file upload.",
   },
   {
     q: "Is it really free?",
@@ -45,6 +49,7 @@ function FAQItem({ q, a, isOpen, onToggle }: { q: string; a: string; isOpen: boo
       <button
         onClick={onToggle}
         className="w-full flex items-center justify-between gap-4 py-6 text-left cursor-pointer group"
+        aria-expanded={isOpen}
       >
         <span className="font-display text-base sm:text-lg font-medium text-white group-hover:text-[#00ff88] transition-colors">
           {q}

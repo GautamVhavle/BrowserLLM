@@ -38,7 +38,7 @@ export function CtaSection({ onStart }: CtaSectionProps) {
           className="text-gray-400 mb-10 max-w-lg mx-auto px-2"
         >
           Pick from 100+ models, click load, and start a fully private conversation.
-          No sign-up. No API keys. No data leaves your device. Works offline.
+          No sign-up. No API keys. Chats stay on this device. Offline after the download.
         </motion.p>
         <motion.div variants={fadeUp} transition={defaultTransition}>
           <button

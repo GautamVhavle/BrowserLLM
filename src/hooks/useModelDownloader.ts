@@ -8,8 +8,10 @@
  * This is independent of the chat engine — it doesn't interfere with
  * any model that's currently loaded for inference.
  */
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import type { BackgroundDownload } from "../types";
+
+export type DownloadResult = "completed" | "failed" | "cancelled" | "busy";
 
 export function useModelDownloader() {
   const [downloads, setDownloads] = useState<BackgroundDownload[]>([]);
@@ -27,9 +29,10 @@ export function useModelDownloader() {
   );
 
   const startDownload = useCallback(
-    async (modelId: string, modelName: string) => {
-      // Don't start duplicate
-      if (workersRef.current.has(modelId)) return;
+    async (modelId: string, modelName: string): Promise<DownloadResult> => {
+      if (workersRef.current.has(modelId)) return "busy";
+      // One engine at a time. A second WebLLM worker allocates another full model.
+      if (workersRef.current.size > 0) return "busy";
 
       // Check WebGPU
       if (!("gpu" in navigator)) {
@@ -44,7 +47,7 @@ export function useModelDownloader() {
             error: "WebGPU is not supported in this browser.",
           },
         ]);
-        return;
+        return "failed";
       }
 
       setDownloads((prev) => {
@@ -62,12 +65,15 @@ export function useModelDownloader() {
         ];
       });
 
+      let worker: Worker | null = null;
+      let tracked = false;
       try {
-        const worker = new Worker(
+        worker = new Worker(
           new URL("../workers/engine.worker.ts", import.meta.url),
           { type: "module" }
         );
         workersRef.current.set(modelId, worker);
+        tracked = true;
 
         // Dynamic import to avoid loading web-llm eagerly on the models page
         const { CreateWebWorkerMLCEngine } = await import("@mlc-ai/web-llm");
@@ -90,8 +96,11 @@ export function useModelDownloader() {
           needsSlidingWindowFix ? { context_window_size: -1, attention_sink_size: 0 } : undefined,
         );
 
-        // Model cached — dispose the engine
-        engine.unload();
+        await engine.unload();
+        if (workersRef.current.get(modelId) !== worker) {
+          worker.terminate();
+          return "cancelled";
+        }
         worker.terminate();
         workersRef.current.delete(modelId);
 
@@ -102,8 +111,11 @@ export function useModelDownloader() {
               : d
           )
         );
+        return "completed";
       } catch (err) {
-        workersRef.current.delete(modelId);
+        const cancelled = tracked && workersRef.current.get(modelId) !== worker;
+        if (worker) workersRef.current.delete(modelId);
+        if (cancelled) return "cancelled";
         setDownloads((prev) =>
           prev.map((d) =>
             d.modelId === modelId
@@ -116,10 +128,19 @@ export function useModelDownloader() {
               : d
           )
         );
+        return "failed";
       }
     },
     []
   );
+
+  useEffect(() => {
+    const workers = workersRef.current;
+    return () => {
+      for (const worker of workers.values()) worker.terminate();
+      workers.clear();
+    };
+  }, []);
 
   const cancelDownload = useCallback((modelId: string) => {
     const worker = workersRef.current.get(modelId);
@@ -137,6 +158,11 @@ export function useModelDownloader() {
   }, []);
 
   const dismissDownload = useCallback((modelId: string) => {
+    const worker = workersRef.current.get(modelId);
+    if (worker) {
+      worker.terminate();
+      workersRef.current.delete(modelId);
+    }
     setDownloads((prev) => prev.filter((d) => d.modelId !== modelId));
   }, []);
 

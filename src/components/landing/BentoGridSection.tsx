@@ -237,13 +237,13 @@ const MODELS = [
   { name: "Llama 3.1", size: "8B", family: "Meta", q: "q4f16" },
   { name: "Qwen2.5", size: "7B", family: "Alibaba", q: "q4f32" },
   { name: "Phi-4", size: "3.8B", family: "Microsoft", q: "q4f16" },
-  { name: "Gemma 2", size: "2B", family: "Google", q: "q4f16" },
+  { name: "Gemma 3", size: "1B", family: "Google", q: "q4f16" },
   { name: "Mistral", size: "7B", family: "Mistral AI", q: "q4f32" },
   { name: "DeepSeek R1", size: "1.5B", family: "DeepSeek", q: "q4f16" },
   { name: "SmolLM2", size: "1.7B", family: "HuggingFace", q: "q4f16" },
   { name: "TinyLlama", size: "1.1B", family: "Community", q: "q4f16" },
   { name: "Llama 3.2", size: "3B", family: "Meta", q: "q4f16" },
-  { name: "Qwen2.5", size: "3B", family: "Alibaba", q: "q4f16" },
+  { name: "Qwen 3.5", size: "2B", family: "Alibaba", q: "q4f16" },
   { name: "Phi-3.5", size: "3.8B", family: "Microsoft", q: "q4f32" },
   { name: "Gemma 2", size: "9B", family: "Google", q: "q4f16" },
 ];
@@ -633,7 +633,7 @@ const BENTO_ITEMS: {
 }[] = [
   {
     title: "Total Privacy",
-    desc: "Your conversations never leave your device. No logging, no analytics, no data harvesting.",
+    desc: "Chats stay on this device. They are not sent to a model API.",
     accent: "#00ff88",
     span: "sm:col-span-2 lg:col-span-3",
     viz: <PrivacyViz />,

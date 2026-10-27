@@ -66,6 +66,7 @@ import {
   loadCustomModels,
   saveCustomModel,
   deleteCustomModel,
+  writeLocal,
   type CustomModel,
 } from "../lib/storage";
 import { Plus, ExternalLink, ArrowUpDown } from "lucide-react";
@@ -869,28 +870,30 @@ export function ModelsPage() {
   };
 
   const handleUseModel = (modelId: string) => {
-    localStorage.setItem("browserai-selected-model", modelId);
+    if (!writeLocal("browserai-selected-model", modelId)) {
+      toast.error("Couldn't save that model choice in this browser.");
+      return;
+    }
     navigate("/chat");
   };
 
   const handleDownload = (modelId: string) => {
     const model = MODEL_CATALOG.find((m) => m.id === modelId);
     const name = model?.name ?? modelId;
-    
-    // Show notification
-    toast.info(`Downloading ${name}...`);
-    
-    // Scroll to top on mobile only (viewport width < 768px)
+
     if (window.innerWidth < 768) {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
-    
-    downloader.startDownload(modelId, name).then(() => {
-      // Refresh cache list after download completes
-      cache.refresh();
-      toast.success(`${name} downloaded successfully!`);
-    }).catch(() => {
-      toast.error(`Failed to download ${name}`);
+
+    void downloader.startDownload(modelId, name).then((result) => {
+      if (result === "completed") {
+        cache.refresh();
+        toast.success(`${name} downloaded successfully!`);
+      } else if (result === "failed") {
+        toast.error(`Failed to download ${name}`);
+      } else if (result === "busy") {
+        toast.info("Finish or cancel the current download first.");
+      }
     });
   };
 

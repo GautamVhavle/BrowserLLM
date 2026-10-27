@@ -25,7 +25,7 @@ export const HOW_IT_WORKS_STEPS: StepItem[] = [
     step: "01",
     icon: createElement(HardDrive, { className: "w-6 h-6" }),
     title: "Pick & Download",
-    desc: "Browse 100+ models in the Model Library, Your chosen model is fetched once and cached in the browser's Cache API. Every visit after that loads instantly.",
+    desc: "Browse 150+ models in the library. The one you pick is downloaded once and kept in the browser cache. Later visits load that copy instead of downloading it again.",
     detail: "4-bit quantization (q4f32) shrinks models by ~8x with minimal quality loss, making even large models browser-friendly.",
   },
   {
@@ -98,7 +98,7 @@ export const FEATURES: FeatureItem[] = [
   {
     icon: createElement(Lock, { className: "w-6 h-6" }),
     title: "Total Privacy",
-    desc: "Your conversations never leave your device. No logging, no analytics, no data harvesting.",
+    desc: "Chats stay on this device and are not sent to a model API.",
   },
   {
     icon: createElement(Wifi, { className: "w-6 h-6" }),

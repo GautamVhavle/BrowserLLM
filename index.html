@@ -14,7 +14,7 @@
 
     <!-- Primary Meta Tags -->
     <title>BrowserLLM - Run AI Models Directly In Your Browser | Free, Private, Offline</title>
-    <meta name="description" content="Run 100+ open-source LLMs entirely in your browser via WebGPU. No servers, no API keys, 100% private, works offline. Supports Llama, Qwen, Phi, Gemma, Mistral, DeepSeek and more. Free forever." />
+    <meta name="description" content="Run 100+ open-source LLMs in your browser with WebGPU. No model API. Chats stay on this device. Offline after a model is saved. Llama, Qwen, Phi, Gemma, Mistral, DeepSeek and more." />
     <meta name="keywords" content="browser LLM, run AI in browser, WebGPU LLM, local AI chatbot, private AI, offline AI, open source LLM, browser AI, run LLM locally, free AI chatbot, no server AI, WebGPU inference, in-browser AI, client-side LLM, BrowserLLM, edge AI, run AI offline, AI without API, WebGPU AI, local language model, browser chatbot, private chatbot, AI privacy, run llama in browser, run qwen in browser" />
     <meta name="author" content="Gautam Vhavle" />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
@@ -28,7 +28,7 @@
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://browserllm.xyz/" />
     <meta property="og:title" content="BrowserLLM - Run AI Models Directly In Your Browser" />
-    <meta property="og:description" content="Run 100+ open-source LLMs entirely in your browser via WebGPU. No servers, no API keys, 100% private, works offline. Llama, Qwen, Phi, Gemma, Mistral, DeepSeek and more." />
+    <meta property="og:description" content="Run 100+ open-source LLMs in your browser with WebGPU. No model API. Chats stay on this device. Offline after a model is saved." />
     <meta property="og:site_name" content="BrowserLLM" />
     <meta property="og:locale" content="en_US" />
     <meta property="og:image" content="https://browserllm.xyz/title.png" />
@@ -41,7 +41,7 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="https://browserllm.xyz/" />
     <meta name="twitter:title" content="BrowserLLM - Run AI Models Directly In Your Browser" />
-    <meta name="twitter:description" content="Run 100+ open-source LLMs entirely in your browser via WebGPU. No servers, no API keys, 100% private, works offline." />
+    <meta name="twitter:description" content="Run 100+ open-source LLMs in your browser with WebGPU. No model API. Chats stay on this device. Offline after a model is saved." />
     <meta name="twitter:image" content="https://browserllm.xyz/title.png" />
     <meta name="twitter:image:alt" content="BrowserLLM - Run AI models directly in your browser with WebGPU" />
     <meta name="twitter:creator" content="@GautamVhavle" />
@@ -124,7 +124,7 @@
           "name": "Is my data really private when using BrowserLLM?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes. All inference happens locally on your device. No data is sent to any server - there is no server. Your conversations are stored only in your browser's local storage. You can verify this by going offline after the first model download - everything still works."
+            "text": "The chat runs on your device and is stored in this browser. It is not sent to a model API. The site can count an anonymous page view, and that count does not include the conversation. After the app and a model are saved, you can disconnect and keep chatting."
           }
         },
         {
@@ -148,7 +148,15 @@
           "name": "Which AI models are available on BrowserLLM?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Over 100 models from families like Llama, Qwen, Phi, Gemma, Mistral, DeepSeek, SmolLM, and more. Models range from tiny 135M parameter models to 70B parameter powerhouses. You can filter by category (general, coding, math, reasoning), size, and hardware compatibility."
+            "text": "About 150 in this build, from SmolLM 135M up to 70B-class models, including Qwen 3.5, Llama 3, Phi, Gemma 3, and Mistral. Gemma 4 is not included yet. You can filter by family, category, size, and hardware."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What happens in a long chat?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The whole thread stays on screen and in this browser. When it no longer fits the model's context window, older turns are condensed into a short memory so the model can continue. Edit and Regenerate appear after a model is loaded. There is no file upload."
           }
         },
         {
@@ -277,7 +285,7 @@
           <ul style="line-height:1.8;">
             <li>100+ open-source LLMs including Llama, Qwen, Phi, Gemma, Mistral, DeepSeek</li>
             <li>100% private - your data never leaves your device</li>
-            <li>Works completely offline after first model download</li>
+            <li>Works offline after the app and a model are saved</li>
             <li>WebGPU-powered near-native GPU performance</li>
             <li>Free forever - no API keys, no subscriptions, no per-token charges</li>
             <li>PWA support - install as a native app on any device</li>
@@ -286,7 +294,7 @@
           <p>BrowserLLM uses WebGPU, the next-generation GPU API for the web, combined with 4-bit quantization and WebAssembly to run large language models at near-native speed directly in your browser tab. Models are cached locally after the first download.</p>
           <h2 style="color:#ccc;font-size:1.2rem;">FAQ</h2>
           <p><strong>How can an AI model run in a browser?</strong> Modern browsers support WebGPU, giving web apps direct GPU access. Combined with 4-bit quantization (8x compression) and WebAssembly, models with billions of parameters run in a browser tab.</p>
-          <p><strong>Is my data private?</strong> Yes. All processing happens on your device. There is no server - your conversations never leave your browser.</p>
+          <p><strong>Is my data private?</strong> The chat runs on your device and stays in this browser. It is not sent to a model API. The site can count an anonymous page view, without the conversation.</p>
           <p><strong>Is it free?</strong> Yes, forever. No API keys, no subscriptions. The computation uses your own GPU.</p>
         </section>
         <p style="color:#555;margin-top:2rem;">Please enable JavaScript to use BrowserLLM.</p>

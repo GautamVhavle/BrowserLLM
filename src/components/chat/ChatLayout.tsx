@@ -33,7 +33,8 @@ import type {
   LoadingProgress,
   BackgroundDownload,
 } from "../../types";
-import { getModelById, AVAILABLE_MODELS } from "../../lib/models";
+import { getModelById, AVAILABLE_MODELS, isKnownModelId } from "../../lib/models";
+import { readSession, removeSession } from "../../lib/storage";
 import { useModelCache } from "../../hooks/useModelCache";
 
 interface ChatLayoutProps {
@@ -45,6 +46,8 @@ interface ChatLayoutProps {
   onDeleteChat: (id: string) => void;
   onClearChat: () => void;
   onSendMessage: (content: string) => void;
+  onEditLastUser: (content: string) => void;
+  onRegenerate: () => void;
   selectedModelId: string;
   loadedModelId: string | null;
   onSelectModel: (id: string) => void;
@@ -56,6 +59,7 @@ interface ChatLayoutProps {
   onLoadModel: (modelId: string) => void;
   onCancelDownload: () => void;
   onStopGeneration: () => void;
+  storageError?: string | null;
   onBack: () => void;
   backgroundDownloads: BackgroundDownload[];
   onDismissBackgroundDownload: (modelId: string) => void;
@@ -319,6 +323,8 @@ export function ChatLayout({
   onDeleteChat,
   onClearChat,
   onSendMessage,
+  onEditLastUser,
+  onRegenerate,
   selectedModelId,
   loadedModelId,
   onSelectModel,
@@ -330,6 +336,7 @@ export function ChatLayout({
   onLoadModel,
   onCancelDownload,
   onStopGeneration,
+  storageError,
   onBack,
   backgroundDownloads,
   onDismissBackgroundDownload,
@@ -338,22 +345,24 @@ export function ChatLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pendingMessageRef = useRef<string | null>(null);
   const sendRef = useRef(onSendMessage);
-  sendRef.current = onSendMessage;
   const model = getModelById(selectedModelId);
   const messages = activeChat?.messages ?? [];
-
-  const supportsVision = model?.categories?.includes("vision") ?? false;
 
   // Redirect to model selector if no model loaded, not loading, no chat history,
   // AND no pending model to auto-load from sessionStorage.
   useEffect(() => {
-    if (!isModelLoaded && !isLoadingModel && messages.length === 0) {
-      const pendingModel = sessionStorage.getItem("browserai-loaded-model");
-      if (!pendingModel) {
+    if (!isModelLoaded && !isLoadingModel && messages.length === 0 && !error) {
+      const pendingModel = readSession("browserai-loaded-model");
+      if (!pendingModel || !isKnownModelId(pendingModel)) {
+        if (pendingModel) removeSession("browserai-loaded-model");
         navigate("/select-model", { replace: true });
       }
     }
-  }, [isModelLoaded, isLoadingModel, messages.length, navigate]);
+  }, [isModelLoaded, isLoadingModel, messages.length, error, navigate]);
+
+  useEffect(() => {
+    sendRef.current = onSendMessage;
+  }, [onSendMessage]);
 
   // Flush any pending message once the active chat is ready
   useEffect(() => {
@@ -365,6 +374,7 @@ export function ChatLayout({
   }, [activeChat]);
 
   const handleSend = (content: string) => {
+    if (!isModelLoaded) return;
     if (!activeChat) {
       pendingMessageRef.current = content;
       onNewChat();
@@ -457,6 +467,12 @@ export function ChatLayout({
           </div>
         </header>
 
+        {storageError && (
+          <div className="px-3 sm:px-4 py-2 text-xs text-orange-300 bg-orange-500/10 border-b border-orange-500/20">
+            {storageError}
+          </div>
+        )}
+
         {/* Content area */}
         {isLoadingModel ? (
           <ModelPickerScreen
@@ -472,14 +488,14 @@ export function ChatLayout({
         ) : (
           <>
             {/* Model disconnected banner — shown when model needs reload but chat history exists */}
-            {!isModelLoaded && messages.length > 0 && (
+            {!isModelLoaded && (
               <div
                 className="flex items-center justify-between gap-3 px-3 sm:px-4 py-3 border-b"
                 style={{ backgroundColor: "#ea580c", borderBottomColor: "#c2410c" }}
               >
                 <div className="flex items-center gap-2 text-white text-xs font-medium">
                   <WifiOff className="w-3.5 h-3.5 shrink-0" />
-                  <span>Model not loaded — reload to continue chatting</span>
+                  <span>{error ?? "Model not loaded — reload to continue chatting"}</span>
                 </div>
                 <button
                   onClick={() => onLoadModel(selectedModelId)}
@@ -495,9 +511,20 @@ export function ChatLayout({
             )}
 
             {messages.length === 0 ? (
-              <EmptyState modelId={selectedModelId} onSuggestion={handleSend} />
+              <EmptyState
+                modelId={selectedModelId}
+                onSuggestion={handleSend}
+                disabled={!isModelLoaded}
+              />
             ) : (
-              <ChatWindow messages={messages} isGenerating={isGenerating} />
+              <ChatWindow
+                messages={messages}
+                isGenerating={isGenerating}
+                condensed={Boolean(activeChat?.memory?.summary)}
+                canRevise={isModelLoaded && !isGenerating}
+                onEditLastUser={onEditLastUser}
+                onRegenerate={onRegenerate}
+              />
             )}
 
             <ChatInput
@@ -510,7 +537,6 @@ export function ChatLayout({
                   ? "Reload model to send messages..."
                   : model ? `Message ${model.name}...` : "Type a message..."
               }
-              supportsVision={supportsVision}
             />
           </>
         )}

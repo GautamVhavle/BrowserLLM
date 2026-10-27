@@ -9,31 +9,104 @@
  *   browserai-active-chat   , Active chat UUID
  *   browserai-custom-models , JSON array of user-added model IDs
  */
-import type { ChatSession } from "../types";
+import type { ChatSession, ConversationMemory, Message } from "../types";
 
 const STORAGE_KEY = "browserai-chats";
 const ACTIVE_CHAT_KEY = "browserai-active-chat";
 
+export function readLocal(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+export function writeLocal(key: string, value: string): boolean {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function removeLocal(key: string): void {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // ignore
+  }
+}
+
+export function readSession(key: string): string | null {
+  try {
+    return sessionStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+export function writeSession(key: string, value: string): void {
+  try {
+    sessionStorage.setItem(key, value);
+  } catch {
+    // ignore
+  }
+}
+
+export function removeSession(key: string): void {
+  try {
+    sessionStorage.removeItem(key);
+  } catch {
+    // ignore
+  }
+}
+
 /** Load all chat sessions from localStorage. */
 export function loadAllChats(): ChatSession[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = readLocal(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed;
+    return parsed.flatMap((chat): ChatSession[] => {
+      if (!chat || typeof chat !== "object") return [];
+      const row = chat as Partial<ChatSession>;
+      if (typeof row.id !== "string" || !Array.isArray(row.messages)) return [];
+      const messages = row.messages.filter(
+        (message): message is Message =>
+          !!message &&
+          (message.role === "user" || message.role === "assistant") &&
+          typeof message.content === "string",
+      );
+      const memory = readMemory(row.memory);
+      return [{
+        id: row.id,
+        title: typeof row.title === "string" ? row.title : "New Chat",
+        modelId: typeof row.modelId === "string" ? row.modelId : "",
+        messages,
+        ...(memory ? { memory } : {}),
+        createdAt: typeof row.createdAt === "number" ? row.createdAt : Date.now(),
+        updatedAt: typeof row.updatedAt === "number" ? row.updatedAt : Date.now(),
+      }];
+    });
   } catch {
     return [];
   }
 }
 
-/** Persist all chat sessions (overwrites the full list). */
-export function saveAllChats(chats: ChatSession[]): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(chats));
-  } catch {
-    // localStorage full, silently fail
-  }
+function readMemory(value: unknown): ConversationMemory | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const row = value as Partial<ConversationMemory>;
+  if (typeof row.summary !== "string" || !row.summary.trim()) return undefined;
+  if (typeof row.coveredCount !== "number" || row.coveredCount < 0) return undefined;
+  return { summary: row.summary, coveredCount: Math.floor(row.coveredCount) };
+}
+
+/** Persist all chat sessions. Returns false when the write was rejected. */
+export function saveAllChats(chats: ChatSession[]): boolean {
+  return writeLocal(STORAGE_KEY, JSON.stringify(chats));
 }
 
 /** Save a single chat (insert or update). */
@@ -59,23 +132,12 @@ export function getChat(id: string): ChatSession | null {
 }
 
 export function loadActiveChatId(): string | null {
-  try {
-    return localStorage.getItem(ACTIVE_CHAT_KEY);
-  } catch {
-    return null;
-  }
+  return readLocal(ACTIVE_CHAT_KEY);
 }
 
 export function saveActiveChatId(id: string | null): void {
-  try {
-    if (id) {
-      localStorage.setItem(ACTIVE_CHAT_KEY, id);
-    } else {
-      localStorage.removeItem(ACTIVE_CHAT_KEY);
-    }
-  } catch {
-    // ignore
-  }
+  if (id) writeLocal(ACTIVE_CHAT_KEY, id);
+  else removeLocal(ACTIVE_CHAT_KEY);
 }
 
 /** Generate a unique chat ID using `crypto.randomUUID()`. */
@@ -105,7 +167,7 @@ const CUSTOM_MODELS_KEY = "browserai-custom-models";
 
 export function loadCustomModels(): CustomModel[] {
   try {
-    const raw = localStorage.getItem(CUSTOM_MODELS_KEY);
+    const raw = readLocal(CUSTOM_MODELS_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
@@ -119,21 +181,13 @@ export function saveCustomModel(model: CustomModel): void {
   const models = loadCustomModels();
   if (!models.some((m) => m.id === model.id)) {
     models.push(model);
-    try {
-      localStorage.setItem(CUSTOM_MODELS_KEY, JSON.stringify(models));
-    } catch {
-      // localStorage full
-    }
+    writeLocal(CUSTOM_MODELS_KEY, JSON.stringify(models));
   }
 }
 
 export function deleteCustomModel(id: string): void {
   const models = loadCustomModels().filter((m) => m.id !== id);
-  try {
-    localStorage.setItem(CUSTOM_MODELS_KEY, JSON.stringify(models));
-  } catch {
-    // ignore
-  }
+  writeLocal(CUSTOM_MODELS_KEY, JSON.stringify(models));
 }
 
 // --- Default Model ---
@@ -141,25 +195,13 @@ export function deleteCustomModel(id: string): void {
 const DEFAULT_MODEL_KEY = "browserai-default-model";
 
 export function loadDefaultModelId(): string | null {
-  try {
-    return localStorage.getItem(DEFAULT_MODEL_KEY);
-  } catch {
-    return null;
-  }
+  return readLocal(DEFAULT_MODEL_KEY);
 }
 
 export function saveDefaultModelId(id: string): void {
-  try {
-    localStorage.setItem(DEFAULT_MODEL_KEY, id);
-  } catch {
-    // ignore
-  }
+  writeLocal(DEFAULT_MODEL_KEY, id);
 }
 
 export function clearDefaultModelId(): void {
-  try {
-    localStorage.removeItem(DEFAULT_MODEL_KEY);
-  } catch {
-    // ignore
-  }
+  removeLocal(DEFAULT_MODEL_KEY);
 }

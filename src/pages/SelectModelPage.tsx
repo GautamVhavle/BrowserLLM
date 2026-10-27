@@ -4,7 +4,7 @@ import { Brain, Cpu, Check, ArrowLeft, Library, Download } from "lucide-react";
 import { AVAILABLE_MODELS, getModelById, DEFAULT_MODEL_ID } from "../lib/models";
 import { useModelCache } from "../hooks/useModelCache";
 import { useSEO } from "../hooks/useSEO";
-import { saveDefaultModelId } from "../lib/storage";
+import { readLocal, writeLocal, writeSession, saveDefaultModelId } from "../lib/storage";
 
 export function SelectModelPage() {
   const navigate = useNavigate();
@@ -18,7 +18,7 @@ export function SelectModelPage() {
   const cachedModels = AVAILABLE_MODELS.filter((m) => cache.isModelCached(m.id));
 
   const [selectedModelId, setSelectedModelId] = useState<string>(() => {
-    const stored = localStorage.getItem("browserai-selected-model");
+    const stored = readLocal("browserai-selected-model");
     if (stored && cachedModels.some((m) => m.id === stored)) return stored;
     if (cachedModels.length > 0) return cachedModels[0].id;
     return DEFAULT_MODEL_ID;
@@ -28,8 +28,8 @@ export function SelectModelPage() {
 
   const handleLoad = () => {
     // Save selection so chat auto-loads it
-    localStorage.setItem("browserai-selected-model", selectedModelId);
-    sessionStorage.setItem("browserai-loaded-model", selectedModelId);
+    writeLocal("browserai-selected-model", selectedModelId);
+    writeSession("browserai-loaded-model", selectedModelId);
     saveDefaultModelId(selectedModelId);
     navigate("/chat");
   };

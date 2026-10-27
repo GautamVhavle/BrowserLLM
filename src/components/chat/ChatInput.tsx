@@ -1,12 +1,8 @@
 /**
- * Chat input bar with auto-resizing textarea, model selector trigger,
- * multimodal attachment button, and submit/stop controls.
- *
- * The attachment (paperclip) button is only active when the loaded model
- * supports vision. For text-only models it's greyed out with a tooltip.
+ * Chat input bar with auto-resizing textarea and submit/stop controls.
  */
 import { useState, useRef, useEffect, type KeyboardEvent } from "react";
-import { ArrowUp, Square, Paperclip } from "lucide-react";
+import { ArrowUp, Square } from "lucide-react";
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -14,7 +10,6 @@ interface ChatInputProps {
   isGenerating: boolean;
   onStop: () => void;
   placeholder?: string;
-  supportsVision?: boolean;
 }
 
 export function ChatInput({
@@ -23,7 +18,6 @@ export function ChatInput({
   isGenerating,
   onStop,
   placeholder,
-  supportsVision = false,
 }: ChatInputProps) {
   const [input, setInput] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -75,30 +69,7 @@ export function ChatInput({
           />
 
           {/* Footer */}
-          <div className="flex items-center justify-between px-2 pb-2">
-            {/* Left: Attachment + Model indicator */}
-            <div className="flex items-center gap-1">
-              {/* Attachment button */}
-              <div className="relative group/attach">
-                <button
-                  disabled={!supportsVision}
-                  className={`p-2 sm:p-2.5 rounded-lg transition-colors cursor-pointer active:scale-95 ${
-                    supportsVision
-                      ? "text-gray-400 hover:text-gray-200 hover:bg-white/[0.06]"
-                      : "text-gray-600 cursor-not-allowed opacity-40"
-                  }`}
-                >
-                  <Paperclip className="w-4 h-4 sm:w-5 sm:h-5" />
-                </button>
-                {!supportsVision && (
-                  <div className="absolute bottom-full left-0 mb-1 px-2 py-1 bg-gray-800 text-[10px] text-gray-300 rounded-lg whitespace-nowrap opacity-0 group-hover/attach:opacity-100 transition-opacity pointer-events-none border border-white/[0.08] shadow-lg">
-                    Not supported by this model
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Right: Submit / Stop */}
+          <div className="flex items-center justify-end px-2 pb-2">
             {isGenerating ? (
               <button
                 onClick={onStop}

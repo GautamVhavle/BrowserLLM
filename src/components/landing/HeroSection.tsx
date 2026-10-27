@@ -170,7 +170,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
           Run <span className="text-white/80 font-normal">100+ open-source models</span> entirely
           in your browser. No servers, no API keys, no data uploaded.
           <br />
-          <span className="text-[#00ff88]/60">Pure Edge AI. Works completely offline.</span>
+          <span className="text-[#00ff88]/60">Pure Edge AI. Offline after a model is saved.</span>
         </motion.p>
 
         {/* ── CTAs ── */}

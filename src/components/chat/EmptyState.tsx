@@ -8,6 +8,7 @@ import { getModelById } from "../../lib/models";
 interface EmptyStateProps {
   modelId: string;
   onSuggestion: (text: string) => void;
+  disabled?: boolean;
 }
 
 const SUGGESTIONS = [
@@ -17,7 +18,7 @@ const SUGGESTIONS = [
   "Help me debug a React component",
 ];
 
-export function EmptyState({ modelId, onSuggestion }: EmptyStateProps) {
+export function EmptyState({ modelId, onSuggestion, disabled = false }: EmptyStateProps) {
   const model = getModelById(modelId);
 
   return (
@@ -41,8 +42,10 @@ export function EmptyState({ modelId, onSuggestion }: EmptyStateProps) {
           {SUGGESTIONS.map((text) => (
             <button
               key={text}
+              type="button"
+              disabled={disabled}
               onClick={() => onSuggestion(text)}
-              className="text-left text-xs text-gray-400 hover:text-gray-200 bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] hover:border-white/[0.1] rounded-xl px-3 py-2.5 transition-all cursor-pointer"
+              className="text-left text-xs text-gray-400 hover:text-gray-200 bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] hover:border-white/[0.1] rounded-xl px-3 py-2.5 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white/[0.03] disabled:hover:text-gray-400"
             >
               <Sparkles className="w-3 h-3 text-purple-400 mb-1" />
               {text}

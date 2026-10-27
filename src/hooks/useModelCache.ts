@@ -4,6 +4,7 @@
  * freeing disk space.
  */
 import { useState, useCallback, useEffect } from "react";
+import { isModelIdCached, urlBelongsToModel } from "../lib/cachePolicy";
 
 export function useModelCache() {
   const [cachedModels, setCachedModels] = useState<Set<string>>(new Set());
@@ -114,7 +115,7 @@ export function useModelCache() {
             const cache = await caches.open(name);
             const keys = await cache.keys();
             for (const req of keys) {
-              if (req.url.includes(modelId)) {
+              if (urlBelongsToModel(req.url, modelId)) {
                 await cache.delete(req);
               }
             }
@@ -133,15 +134,7 @@ export function useModelCache() {
   );
 
   const isModelCached = useCallback(
-    (modelId: string): boolean => {
-      // Check if any cached model name contains a significant part of the model ID
-      for (const cached of cachedModels) {
-        if (modelId.includes(cached) || cached.includes(modelId)) {
-          return true;
-        }
-      }
-      return false;
-    },
+    (modelId: string): boolean => isModelIdCached(cachedModels, modelId),
     [cachedModels]
   );
 

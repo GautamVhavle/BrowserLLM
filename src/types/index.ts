@@ -22,6 +22,8 @@ export interface Message {
   stats?: GenerationStats;
   /** Name of the model that generated this response. */
   modelName?: string;
+  /** Failed turn. Shown in the thread, omitted from the next prompt. */
+  error?: boolean;
 }
 
 /** Progress reported during model download/initialization. */
@@ -63,6 +65,17 @@ export interface BackgroundDownload {
   error?: string;
 }
 
+/**
+ * Condensed prefix of a thread. The full messages stay on screen.
+ * The model sees this summary plus the turns that still fit, so the
+ * prompt prefix stays stable and WebLLM can reuse its KV cache.
+ */
+export interface ConversationMemory {
+  summary: string;
+  /** How many messages from the start of `messages` this summary covers. */
+  coveredCount: number;
+}
+
 /** A single chat conversation persisted to localStorage. */
 export interface ChatSession {
   id: string;
@@ -70,6 +83,7 @@ export interface ChatSession {
   /** The WebLLM model ID associated with this chat. */
   modelId: string;
   messages: Message[];
+  memory?: ConversationMemory;
   /** Unix timestamp (ms) when the chat was created. */
   createdAt: number;
   /** Unix timestamp (ms) of the last update. */

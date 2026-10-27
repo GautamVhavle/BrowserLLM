@@ -21,7 +21,7 @@ export function Footer() {
               <span className="font-display text-lg text-white/90 font-semibold">BrowserLLM</span>
             </div>
             <p className="text-[13px] text-white/30 leading-relaxed max-w-[260px] mb-5">
-              Run AI models entirely in your browser. No servers, no tracking, no compromises on privacy.
+              Run AI models entirely in your browser. No model API. Chats stay on this device.
             </p>
             <a
               href="https://github.com/GautamVhavle/BrowserLLM"

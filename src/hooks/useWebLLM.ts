@@ -1,14 +1,9 @@
 /**
  * Core WebLLM hook, manages the MLC engine lifecycle.
  *
- * Responsibilities:
- * - WebGPU capability detection
- * - Model loading (with cancel support)
- * - Streaming text generation with usage stats
- * - Background model downloads (download while using another model)
- *
- * The engine runs inside a Web Worker (`engine.worker.ts`) so the main
- * thread stays responsive during inference.
+ * One foreground worker at a time. Background downloads are refused while
+ * that worker exists: WebLLM has no cache-only API, so a second engine
+ * would allocate another full model on the GPU.
  */
 import { useState, useRef, useCallback, useEffect } from "react";
 import {
@@ -16,13 +11,36 @@ import {
   type WebWorkerMLCEngine,
   type ChatCompletionMessageParam,
 } from "@mlc-ai/web-llm";
-import type { Message, LoadingProgress, GenerationStats, BackgroundDownload } from "../types";
+import type { ConversationMemory, Message, LoadingProgress, GenerationStats, BackgroundDownload } from "../types";
+import { getModelById, isKnownModelId } from "../lib/models";
+import { readSession, removeSession, writeSession } from "../lib/storage";
+import {
+  completionBudget,
+  estimateTokens,
+  planContext,
+  summaryRequest,
+  systemContent,
+  takeSummaryChunk,
+} from "../lib/promptHistory";
+import { urlBelongsToModel } from "../lib/cachePolicy";
 
 const SESSION_KEY = "browserai-loaded-model";
 
+const SUMMARY_INSTRUCTION =
+  "Condense the conversation into a memory the assistant can use later. Keep names, decisions, and goals. At most 120 words.";
+
+function slidingWindowOverride(modelId: string) {
+  return modelId.toLowerCase().includes("gemma3")
+    ? { context_window_size: -1, attention_sink_size: 0 }
+    : undefined;
+}
+
 export function useWebLLM() {
   const [isModelLoaded, setIsModelLoaded] = useState(false);
-  const [isLoadingModel, setIsLoadingModel] = useState(false);
+  const [isLoadingModel, setIsLoadingModel] = useState(() => {
+    const remembered = readSession(SESSION_KEY);
+    return Boolean(remembered && isKnownModelId(remembered));
+  });
   const [isGenerating, setIsGenerating] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState<LoadingProgress>({
     text: "",
@@ -36,8 +54,10 @@ export function useWebLLM() {
   const abortRef = useRef(false);
   const workerRef = useRef<Worker | null>(null);
   const loadingModelIdRef = useRef<string | null>(null);
+  const loadedModelIdRef = useRef<string | null>(null);
+  const loadGen = useRef(0);
+  const bgWorkersRef = useRef<Map<string, Worker>>(new Map());
 
-  /** Verify that the browser supports WebGPU and a GPU adapter is available. */
   const checkWebGPU = useCallback(async (): Promise<boolean> => {
     if (!("gpu" in navigator)) {
       setError(
@@ -46,11 +66,9 @@ export function useWebLLM() {
       return false;
     }
     try {
-      const adapter = await (navigator as any).gpu.requestAdapter();
+      const adapter = await navigator.gpu.requestAdapter();
       if (!adapter) {
-        setError(
-          "No WebGPU adapter found. Your GPU may not be supported."
-        );
+        setError("No WebGPU adapter found. Your GPU may not be supported.");
         return false;
       }
       return true;
@@ -60,57 +78,56 @@ export function useWebLLM() {
     }
   }, []);
 
-  /** Cancel an in-progress foreground model download by terminating its worker. */
-  const cancelDownload = useCallback(async () => {
-    if (workerRef.current && isLoadingModel) {
-      const modelId = loadingModelIdRef.current;
-      workerRef.current.terminate();
-      workerRef.current = null;
-      engineRef.current = null;
-      setIsLoadingModel(false);
-      setLoadingProgress({ text: "", progress: 0 });
-      setError(null);
+  const stopBackgroundWorkers = useCallback(() => {
+    for (const worker of bgWorkersRef.current.values()) worker.terminate();
+    bgWorkersRef.current.clear();
+  }, []);
 
-      // Clean up partial cache entries for the cancelled model
-      if (modelId) {
-        try {
-          const names = await caches.keys();
-          for (const name of names) {
-            if (name.includes("webllm") || name.includes("model")) {
-              const cache = await caches.open(name);
-              const keys = await cache.keys();
-              for (const req of keys) {
-                if (req.url.includes(modelId)) {
-                  await cache.delete(req);
-                }
-              }
-            }
-          }
-        } catch {
-          // Cache cleanup failed, not critical
+  const cancelDownload = useCallback(async () => {
+    if (!workerRef.current && !isLoadingModel) return;
+    loadGen.current += 1;
+    const modelId = loadingModelIdRef.current;
+    workerRef.current?.terminate();
+    workerRef.current = null;
+    engineRef.current = null;
+    loadingModelIdRef.current = null;
+    setIsLoadingModel(false);
+    setLoadingProgress({ text: "", progress: 0 });
+    setError(null);
+
+    if (!modelId) return;
+    try {
+      const names = await caches.keys();
+      for (const name of names) {
+        if (!name.includes("webllm") && !name.includes("model")) continue;
+        const cache = await caches.open(name);
+        const keys = await cache.keys();
+        for (const req of keys) {
+          if (urlBelongsToModel(req.url, modelId)) await cache.delete(req);
         }
       }
+    } catch {
+      // Partial cache cleanup is best-effort.
     }
   }, [isLoadingModel]);
 
-  /**
-   * Load (or switch to) a model in the foreground.
-   * Creates a new Web Worker, downloads/caches the model weights,
-   * and initializes the MLC engine for inference.
-   */
   const loadModel = useCallback(
     async (modelId: string) => {
-      if (loadedModelId === modelId && isModelLoaded) return;
+      if (loadedModelIdRef.current === modelId && engineRef.current) return;
 
       setError(null);
       const gpuOk = await checkWebGPU();
-      if (!gpuOk) return;
-
-      // Cancel any existing download
-      if (workerRef.current) {
-        workerRef.current.terminate();
-        workerRef.current = null;
+      if (!gpuOk) {
+        setIsLoadingModel(false);
+        return;
       }
+
+      const gen = ++loadGen.current;
+      stopBackgroundWorkers();
+      workerRef.current?.terminate();
+      workerRef.current = null;
+      engineRef.current = null;
+      loadedModelIdRef.current = null;
 
       loadingModelIdRef.current = modelId;
       setIsLoadingModel(true);
@@ -118,71 +135,107 @@ export function useWebLLM() {
       setLoadedModelId(null);
       setLoadingProgress({ text: "Starting model download...", progress: 0 });
 
+      let worker: Worker | null = null;
       try {
-        const worker = new Worker(
+        worker = new Worker(
           new URL("../workers/engine.worker.ts", import.meta.url),
           { type: "module" }
         );
+        if (gen !== loadGen.current) {
+          worker.terminate();
+          return;
+        }
         workerRef.current = worker;
 
-        // Gemma 3 models use sliding window attention — WebLLM requires only
-        // one of context_window_size / sliding_window_size to be positive.
-        const needsSlidingWindowFix = modelId.toLowerCase().includes("gemma3");
         const engine = await CreateWebWorkerMLCEngine(
           worker,
           modelId,
           {
             initProgressCallback: (report) => {
+              if (gen !== loadGen.current) return;
               setLoadingProgress({
                 text: report.text,
                 progress: report.progress,
               });
             },
           },
-          needsSlidingWindowFix ? { context_window_size: -1, attention_sink_size: 0 } : undefined,
+          slidingWindowOverride(modelId),
         );
 
+        if (gen !== loadGen.current) {
+          worker.terminate();
+          void engine.unload().catch(() => {});
+          return;
+        }
+
         engineRef.current = engine;
+        loadedModelIdRef.current = modelId;
         setLoadedModelId(modelId);
         setIsModelLoaded(true);
-        // Persist so we can auto-reload from cache after page refresh
-        try { sessionStorage.setItem(SESSION_KEY, modelId); } catch {}
+        writeSession(SESSION_KEY, modelId);
       } catch (err) {
-        // Don't show error if worker was terminated (cancelled)
-        if (workerRef.current) {
-          setError(
-            `Failed to load model: ${err instanceof Error ? err.message : String(err)}`
-          );
+        if (gen !== loadGen.current) return;
+        if (worker && workerRef.current === worker) {
+          workerRef.current = null;
+          engineRef.current = null;
         }
+        const message = err instanceof Error ? err.message : String(err);
+        if (message.includes("Cannot find model record") || message.includes("ModelNotFound")) {
+          removeSession(SESSION_KEY);
+        }
+        setError(`Failed to load model: ${message}`);
       } finally {
-        setIsLoadingModel(false);
+        if (gen === loadGen.current) setIsLoadingModel(false);
       }
     },
-    [checkWebGPU, loadedModelId, isModelLoaded]
+    [checkWebGPU, stopBackgroundWorkers]
   );
 
-  // Auto-reload model from cache after page refresh / tab restore
   const autoLoadFired = useRef(false);
   useEffect(() => {
-    if (autoLoadFired.current || isModelLoaded || isLoadingModel) return;
+    if (autoLoadFired.current) return;
     autoLoadFired.current = true;
-    try {
-      const lastModel = sessionStorage.getItem(SESSION_KEY);
-      if (lastModel) {
-        loadModel(lastModel);
-      }
-    } catch {}
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    const lastModel = readSession(SESSION_KEY);
+    if (lastModel && isKnownModelId(lastModel)) {
+      void loadModel(lastModel);
+    } else {
+      if (lastModel) removeSession(SESSION_KEY);
+      setIsLoadingModel(false);
+    }
+  }, [loadModel]);
 
-  /**
-   * Download a model in the background while the user chats with the current model.
-   * The downloaded model is cached via the Cache API and can be loaded instantly later.
-   * The background engine is disposed after download completes.
-   */
+  useEffect(() => {
+    return () => {
+      loadGen.current += 1;
+      workerRef.current?.terminate();
+      workerRef.current = null;
+      engineRef.current = null;
+      stopBackgroundWorkers();
+    };
+  }, [stopBackgroundWorkers]);
+
   const startBackgroundDownload = useCallback(
     async (modelId: string, modelName: string) => {
-      // Don't start if already downloading this model
       if (backgroundDownloads.some((d) => d.modelId === modelId && d.status === "downloading")) return;
+
+      // shortcut: WebLLM initializes a full engine to fill the cache. A second
+      // engine next to a loaded model OOMs the tab, so this waits until the
+      // foreground worker is gone.
+      if (workerRef.current || engineRef.current) {
+        setBackgroundDownloads((prev) => [
+          ...prev.filter((d) => d.modelId !== modelId),
+          {
+            modelId,
+            modelName,
+            progress: 0,
+            text: "A model is already loaded",
+            status: "error",
+            error: "Unload the current model before downloading another.",
+          },
+        ]);
+        return;
+      }
+      if (bgWorkersRef.current.size > 0) return;
 
       const gpuOk = await checkWebGPU();
       if (!gpuOk) return;
@@ -194,21 +247,21 @@ export function useWebLLM() {
         text: "Starting download...",
         status: "downloading",
       };
-      setBackgroundDownloads((prev) => [...prev, dl]);
+      setBackgroundDownloads((prev) => [...prev.filter((d) => d.modelId !== modelId), dl]);
+
+      const bgWorker = new Worker(
+        new URL("../workers/engine.worker.ts", import.meta.url),
+        { type: "module" }
+      );
+      bgWorkersRef.current.set(modelId, bgWorker);
 
       try {
-        const bgWorker = new Worker(
-          new URL("../workers/engine.worker.ts", import.meta.url),
-          { type: "module" }
-        );
-
-        // Just download/cache the model, then dispose
-        const bgNeedsSlidingWindowFix = modelId.toLowerCase().includes("gemma3");
         const bgEngine = await CreateWebWorkerMLCEngine(
           bgWorker,
           modelId,
           {
             initProgressCallback: (report) => {
+              if (bgWorkersRef.current.get(modelId) !== bgWorker) return;
               setBackgroundDownloads((prev) =>
                 prev.map((d) =>
                   d.modelId === modelId
@@ -218,12 +271,18 @@ export function useWebLLM() {
               );
             },
           },
-          bgNeedsSlidingWindowFix ? { context_window_size: -1, attention_sink_size: 0 } : undefined,
+          slidingWindowOverride(modelId),
         );
 
-        // Model is loaded, terminate the bg engine since we just wanted to cache it
-        bgEngine.unload();
+        if (bgWorkersRef.current.get(modelId) !== bgWorker) {
+          bgWorker.terminate();
+          void bgEngine.unload().catch(() => {});
+          return;
+        }
+
+        await bgEngine.unload();
         bgWorker.terminate();
+        bgWorkersRef.current.delete(modelId);
 
         setBackgroundDownloads((prev) =>
           prev.map((d) =>
@@ -231,6 +290,9 @@ export function useWebLLM() {
           )
         );
       } catch (err) {
+        const cancelled = bgWorkersRef.current.get(modelId) !== bgWorker;
+        bgWorkersRef.current.delete(modelId);
+        if (cancelled) return;
         setBackgroundDownloads((prev) =>
           prev.map((d) =>
             d.modelId === modelId
@@ -244,6 +306,9 @@ export function useWebLLM() {
   );
 
   const cancelBackgroundDownload = useCallback((modelId: string) => {
+    const worker = bgWorkersRef.current.get(modelId);
+    bgWorkersRef.current.delete(modelId);
+    worker?.terminate();
     setBackgroundDownloads((prev) =>
       prev.map((d) =>
         d.modelId === modelId ? { ...d, status: "cancelled" } : d
@@ -252,19 +317,56 @@ export function useWebLLM() {
   }, []);
 
   const dismissBackgroundDownload = useCallback((modelId: string) => {
+    const worker = bgWorkersRef.current.get(modelId);
+    bgWorkersRef.current.delete(modelId);
+    worker?.terminate();
     setBackgroundDownloads((prev) => prev.filter((d) => d.modelId !== modelId));
   }, []);
 
-  /**
-   * Run streaming inference against the loaded model.
-   * Calls `onToken` with the accumulated reply text after each token.
-   * Returns the final complete response and generation stats.
-   */
+  const complete = useCallback(
+    async (
+      messages: ChatCompletionMessageParam[],
+      maxTokens: number,
+      temperature: number,
+      includeUsage: boolean,
+      onDelta?: (fullText: string) => void,
+    ): Promise<{ text: string; usage: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number } | null; tokens: number }> => {
+      if (!engineRef.current) throw new Error("Model not loaded");
+      const chunks = await engineRef.current.chat.completions.create({
+        messages,
+        stream: true,
+        ...(includeUsage ? { stream_options: { include_usage: true } } : {}),
+        temperature,
+        max_tokens: maxTokens,
+      });
+      let text = "";
+      let tokens = 0;
+      let usage: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number } | null = null;
+      try {
+        for await (const chunk of chunks) {
+          if (abortRef.current) break;
+          const delta = chunk.choices[0]?.delta?.content || "";
+          if (delta) {
+            tokens++;
+            text += delta;
+            onDelta?.(text);
+          }
+          if (chunk.usage) usage = chunk.usage;
+        }
+      } catch (err) {
+        if (!abortRef.current) throw err;
+      }
+      return { text, usage, tokens };
+    },
+    [],
+  );
+
   const generate = useCallback(
     async (
       history: Message[],
-      onToken: (fullText: string) => void
-    ): Promise<{ text: string; stats: GenerationStats | null }> => {
+      onToken: (fullText: string) => void,
+      memory: ConversationMemory | null = null,
+    ): Promise<{ text: string; stats: GenerationStats | null; memory: ConversationMemory | null }> => {
       if (!engineRef.current) throw new Error("Model not loaded");
 
       abortRef.current = false;
@@ -272,59 +374,72 @@ export function useWebLLM() {
       setLastStats(null);
 
       const startTime = performance.now();
-      let tokenCount = 0;
+      const modelId = loadedModelIdRef.current ?? "";
+      const contextTotal = getModelById(modelId)?.contextWindow || 4096;
+      const maxTokens = completionBudget(contextTotal);
+      let summary = memory?.summary ?? "";
+      let covered = memory?.coveredCount ?? 0;
+
+      const remembered = (): ConversationMemory | null =>
+        summary && covered > 0 ? { summary, coveredCount: covered } : null;
 
       try {
+        let plan = planContext(
+          history,
+          covered,
+          contextTotal,
+          maxTokens + estimateTokens(systemContent(summary || null)),
+        );
+        let folds = 0;
+        while (plan.needsFold && folds < 8) {
+          if (abortRef.current) return { text: "", stats: null, memory: remembered() };
+          const chunk = takeSummaryChunk(
+            history,
+            covered,
+            plan.foldCount,
+            Math.max(256, contextTotal - maxTokens - 200),
+          );
+          if (chunk.messages.length === 0 || chunk.next <= covered) break;
+          const written = await complete(
+            [
+              { role: "system", content: SUMMARY_INSTRUCTION },
+              { role: "user", content: summaryRequest(summary, chunk.messages) },
+            ],
+            220,
+            0.2,
+            false,
+          );
+          if (abortRef.current) return { text: "", stats: null, memory: remembered() };
+          summary = written.text.trim() || summary || "Earlier turns were shortened to fit the context window.";
+          covered = chunk.next;
+          folds++;
+          plan = planContext(
+            history,
+            covered,
+            contextTotal,
+            maxTokens + estimateTokens(systemContent(summary)),
+          );
+        }
+
+        const prompt = systemContent(summary || null);
         const chatHistory: ChatCompletionMessageParam[] = [
-          {
-            role: "system",
-            content:
-              "You are a helpful, friendly AI assistant running locally in the user's browser. Keep responses concise and helpful.",
-          },
-          ...history.map((m) => ({
+          { role: "system", content: prompt },
+          ...plan.recent.map((m) => ({
             role: m.role as "user" | "assistant",
             content: m.content,
           })),
         ];
 
-        const chunks = await engineRef.current.chat.completions.create({
-          messages: chatHistory,
-          stream: true,
-          stream_options: { include_usage: true },
-          temperature: 0.7,
-          max_tokens: 1024,
-        });
+        const reply = await complete(chatHistory, maxTokens, 0.7, true, onToken);
 
-        let fullReply = "";
-        let usageInfo: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number } | null = null;
-
-        for await (const chunk of chunks) {
-          if (abortRef.current) break;
-          const delta = chunk.choices[0]?.delta?.content || "";
-          if (delta) {
-            tokenCount++;
-            fullReply += delta;
-            onToken(fullReply);
-          }
-          if (chunk.usage) {
-            usageInfo = chunk.usage;
-          }
-        }
-
-        if (!fullReply && !abortRef.current) {
-          throw new Error(
-            "Model returned an empty response. Try reloading the model."
-          );
+        if (!reply.text && !abortRef.current) {
+          throw new Error("Model returned an empty response. Try reloading the model.");
         }
 
         const elapsed = performance.now() - startTime;
-        const promptTokens = usageInfo?.prompt_tokens ?? 0;
-        const completionTokens = usageInfo?.completion_tokens ?? tokenCount;
-        const totalTokens = usageInfo?.total_tokens ?? (promptTokens + completionTokens);
-
-        // Get context window from the loaded model config (default 4096)
-        const contextTotal = 4096;
-
+        const promptTokens = reply.usage?.prompt_tokens ?? 0;
+        const completionTokens = reply.usage?.completion_tokens ?? reply.tokens;
+        const totalTokens = reply.usage?.total_tokens ?? (promptTokens + completionTokens);
         const stats: GenerationStats = {
           tokensGenerated: completionTokens,
           totalTokens,
@@ -332,22 +447,28 @@ export function useWebLLM() {
           tokensPerSecond: elapsed > 0 ? (completionTokens / (elapsed / 1000)) : 0,
           contextUsed: totalTokens,
           contextTotal,
-          systemPromptTokens: 0,
+          systemPromptTokens: estimateTokens(prompt),
           generationTimeMs: elapsed,
         };
 
-        setLastStats(stats);
-
-        return { text: fullReply, stats };
+        if (!abortRef.current) setLastStats(stats);
+        return {
+          text: reply.text,
+          stats: abortRef.current ? null : stats,
+          memory: remembered(),
+        };
       } finally {
         setIsGenerating(false);
       }
     },
-    []
+    [complete]
   );
 
   const stopGeneration = useCallback(() => {
     abortRef.current = true;
+    const engine = engineRef.current;
+    if (!engine) return;
+    engine.interruptGenerate();
   }, []);
 
   return {
